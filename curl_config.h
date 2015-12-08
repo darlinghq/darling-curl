@@ -32,7 +32,7 @@
 /* #undef CURL_DISABLE_IMAP */
 
 /* to disable LDAP */
-/* #undef CURL_DISABLE_LDAP */
+#define CURL_DISABLE_LDAP 1
 
 /* to disable LDAPS */
 /* #undef CURL_DISABLE_LDAPS */
@@ -366,25 +366,25 @@
 /* #undef HAVE_IO_H */
 
 /* Define to 1 if you have the lber.h header file. */
-#define HAVE_LBER_H 1
+/* #undef HAVE_LBER_H 1 */
 
 /* Define to 1 if you have the ldapssl.h header file. */
 /* #undef HAVE_LDAPSSL_H */
 
 /* Define to 1 if you have the ldap.h header file. */
-#define HAVE_LDAP_H 1
+/* #define HAVE_LDAP_H 1 */
 
 /* Define to 1 if you have the `ldap_init_fd' function. */
 /* #undef HAVE_LDAP_INIT_FD */
 
 /* Use LDAPS implementation */
-#define HAVE_LDAP_SSL 1
+/* #define HAVE_LDAP_SSL 1 */
 
 /* Define to 1 if you have the ldap_ssl.h header file. */
 /* #undef HAVE_LDAP_SSL_H */
 
 /* Define to 1 if you have the `ldap_url_parse' function. */
-#define HAVE_LDAP_URL_PARSE 1
+/* #define HAVE_LDAP_URL_PARSE 1 */
 
 /* Define to 1 if you have the <libgen.h> header file. */
 #define HAVE_LIBGEN_H 1
@@ -393,7 +393,7 @@
 /* #undef HAVE_LIBIDN */
 
 /* Define to 1 if you have the `resolve' library (-lresolve). */
-/* #undef HAVE_LIBRESOLVE */
+#define HAVE_LIBRESOLVE 1
 
 /* Define to 1 if using libressl. */
 /* #undef HAVE_LIBRESSL */
@@ -408,7 +408,7 @@
 /* #undef HAVE_LIBSSH2_H */
 
 /* Define to 1 if you have the `ssl' library (-lssl). */
-/* #undef HAVE_LIBSSL */
+#define HAVE_LIBSSL 1
 
 /* if zlib is available */
 #define HAVE_LIBZ 1
@@ -933,7 +933,7 @@
 /* #undef USE_CYASSL */
 
 /* to enable iOS/Mac OS X native SSL/TLS support */
-#define USE_DARWINSSL 1
+/* #undef USE_DARWINSSL 0 */
 
 /* if GnuTLS is enabled */
 /* #undef USE_GNUTLS */
@@ -963,7 +963,7 @@
 /* #undef USE_OPENLDAP */
 
 /* if OpenSSL is in use */
-/* #undef USE_OPENSSL */
+#define USE_OPENSSL 1
 
 /* if PolarSSL is enabled */
 /* #undef USE_POLARSSL */
