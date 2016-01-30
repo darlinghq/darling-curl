@@ -15,6 +15,7 @@ add_definitions(-D__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1080)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostdinc -D__DARWIN_UNIX03 -fPIC -w")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -nostdlib -Wl,--version-script=${DARLING_TOP_DIRECTORY}/darwin.map")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -nostdlib -Wl,--version-script=${DARLING_TOP_DIRECTORY}/darwin.map")
 
 SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib${SUFFIX}/darling")
 SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE) 
@@ -137,10 +138,60 @@ set(curl_SRCS
 	curl/lib/wildcard.c
 	curl/lib/x509asn1.c
 	curl/lib/vtls/openssl.c
+	curl/lib/vtls/vtls.c
 )
 
+set(curlexe_SRCS
+	curl/src/tool_binmode.c
+	curl/src/tool_bname.c
+	curl/src/tool_cb_dbg.c
+	curl/src/tool_cb_hdr.c
+	curl/src/tool_cb_prg.c
+	curl/src/tool_cb_rea.c
+	curl/src/tool_cb_see.c
+	curl/src/tool_cb_wrt.c
+	curl/src/tool_cfgable.c
+	curl/src/tool_convert.c
+	curl/src/tool_dirhie.c
+	curl/src/tool_doswin.c
+	curl/src/tool_easysrc.c
+	curl/src/tool_formparse.c
+	curl/src/tool_getparam.c
+	curl/src/tool_getpass.c
+	curl/src/tool_help.c
+	curl/src/tool_helpers.c
+	curl/src/tool_homedir.c
+	curl/src/tool_hugehelp.c
+	curl/src/tool_libinfo.c
+	curl/src/tool_main.c
+	curl/src/tool_metalink.c
+	curl/src/tool_mfiles.c
+	curl/src/tool_msgs.c
+	curl/src/tool_operate.c
+	curl/src/tool_operhlp.c
+	curl/src/tool_panykey.c
+	curl/src/tool_paramhlp.c
+	curl/src/tool_parsecfg.c
+	curl/src/tool_setopt.c
+	curl/src/tool_sleep.c
+	curl/src/tool_strdup.c
+	curl/src/tool_urlglob.c
+	curl/src/tool_util.c
+	# curl/src/tool_vms.c
+	curl/src/tool_writeenv.c
+	curl/src/tool_writeout.c
+	curl/src/tool_xattr.c
+)
+
+include(darling_exe)
+
 add_library(curl SHARED ${curl_SRCS})
-target_link_libraries(curl PRIVATE system ssl098)
+target_link_libraries(curl PRIVATE system ssl098 z)
+
+add_darling_executable(curlexe ${curlexe_SRCS})
+target_link_libraries(curlexe curl)
+set_target_properties(curlexe PROPERTIES OUTPUT_NAME curl)
 
 install(TARGETS curl DESTINATION lib${SUFFIX}/darling)
+install(TARGETS curlexe DESTINATION libexec/darling/usr/bin)
 
