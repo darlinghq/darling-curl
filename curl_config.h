@@ -5,7 +5,7 @@
 /* #undef CURL_CA_BUNDLE */
 
 /* Location of default ca path */
-/* #undef CURL_CA_PATH */
+#define CURL_CA_PATH "/System/Library/OpenSSL/certs"
 
 /* to disable cookies support */
 /* #undef CURL_DISABLE_COOKIES */
