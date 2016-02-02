@@ -188,10 +188,13 @@ include(darling_exe)
 add_library(curl SHARED ${curl_SRCS})
 target_link_libraries(curl PRIVATE system ssl098 z)
 
-add_darling_executable(curlexe ${curlexe_SRCS})
-target_link_libraries(curlexe curl)
-set_target_properties(curlexe PROPERTIES OUTPUT_NAME curl)
+if (NOT DARLING_NO_EXECUTABLES)
+    add_darling_executable(curlexe ${curlexe_SRCS})
+    target_link_libraries(curlexe curl)
+    set_target_properties(curlexe PROPERTIES OUTPUT_NAME curl)
+    
+    install(TARGETS curlexe DESTINATION libexec/darling/usr/bin)
+endif (NOT DARLING_NO_EXECUTABLES)
 
 install(TARGETS curl DESTINATION lib${SUFFIX}/darling)
-install(TARGETS curlexe DESTINATION libexec/darling/usr/bin)
 
