@@ -14,12 +14,6 @@ add_definitions(-D__APPLE__ -D__DYNAMIC__)
 add_definitions(-D__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1080)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostdinc -D__DARWIN_UNIX03 -fPIC -w")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -nostdlib -Wl,--version-script=${DARLING_TOP_DIRECTORY}/darwin.map")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -nostdlib -Wl,--version-script=${DARLING_TOP_DIRECTORY}/darwin.map")
-
-SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/darling")
-SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE) 
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/curl/include)
@@ -185,18 +179,22 @@ set(curlexe_SRCS
 
 include(darling_exe)
 
-add_library(curl SHARED ${curl_SRCS})
+set(DYLIB_INSTALL_NAME "/usr/lib/libcurl.4.dylib")
+add_darling_library(curl SHARED ${curl_SRCS})
 target_link_libraries(curl PRIVATE system ssl098 z)
+set_target_properties(curl PROPERTIES OUTPUT_NAME "curl.4")
 
 if (NOT DARLING_NO_EXECUTABLES)
     add_darling_executable(curlexe ${curlexe_SRCS})
-    target_link_libraries(curlexe curl)
+    target_link_libraries(curlexe system curl z)
     set_target_properties(curlexe PROPERTIES OUTPUT_NAME curl)
     
     install(TARGETS curlexe DESTINATION libexec/darling/usr/bin)
 endif (NOT DARLING_NO_EXECUTABLES)
 
-install(TARGETS curl DESTINATION ${CMAKE_INSTALL_LIBDIR}/darling)
+install(TARGETS curl DESTINATION libexec/darling/usr/lib)
+InstallSymlink("libcurl.4.dylib" "${CMAKE_INSTALL_PREFIX}/libexec/darling/usr/lib/libcurl.3.dylib")
+InstallSymlink("libcurl.4.dylib" "${CMAKE_INSTALL_PREFIX}/libexec/darling/usr/lib/libcurl.dylib")
 
 set(man1
 	curl/docs/curl-config.1
