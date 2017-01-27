@@ -181,6 +181,7 @@ include(darling_exe)
 
 set(DYLIB_INSTALL_NAME "/usr/lib/libcurl.4.dylib")
 add_darling_library(curl SHARED ${curl_SRCS})
+make_fat(curl)
 target_link_libraries(curl PRIVATE system ssl098 z)
 set_target_properties(curl PROPERTIES OUTPUT_NAME "curl.4")
 
