@@ -180,6 +180,9 @@ set(curlexe_SRCS
 include(darling_exe)
 
 set(DYLIB_INSTALL_NAME "/usr/lib/libcurl.4.dylib")
+set(DYLIB_COMPAT_VERSION "7.0.0")
+set(DYLIB_CURRENT_VERSION "8.0.0")
+
 add_darling_library(curl SHARED ${curl_SRCS})
 make_fat(curl)
 target_link_libraries(curl PRIVATE system ssl098 z)
