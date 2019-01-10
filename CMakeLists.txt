@@ -131,8 +131,10 @@ set(curl_SRCS
 	curl/lib/warnless.c
 	curl/lib/wildcard.c
 	curl/lib/x509asn1.c
-	curl/lib/vtls/openssl.c
+	#curl/lib/vtls/openssl.c
 	curl/lib/vtls/vtls.c
+
+	curl/lib/vtls/darwinssl.c
 )
 
 set(curlexe_SRCS
@@ -185,7 +187,7 @@ set(DYLIB_CURRENT_VERSION "8.0.0")
 
 add_darling_library(curl SHARED ${curl_SRCS})
 make_fat(curl)
-target_link_libraries(curl PRIVATE system ssl098 z)
+target_link_libraries(curl PRIVATE system ssl098 z CoreFoundation Security)
 set_target_properties(curl PROPERTIES OUTPUT_NAME "curl.4")
 
 if (NOT DARLING_NO_EXECUTABLES)

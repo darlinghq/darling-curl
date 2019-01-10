@@ -934,6 +934,7 @@
 
 /* to enable iOS/Mac OS X native SSL/TLS support */
 /* #undef USE_DARWINSSL 0 */
+#define USE_DARWINSSL 1
 
 /* if GnuTLS is enabled */
 /* #undef USE_GNUTLS */
@@ -963,7 +964,7 @@
 /* #undef USE_OPENLDAP */
 
 /* if OpenSSL is in use */
-#define USE_OPENSSL 1
+/* #define USE_OPENSSL 1 */
 
 /* if PolarSSL is enabled */
 /* #undef USE_POLARSSL */
