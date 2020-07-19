@@ -11,7 +11,7 @@
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at http://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.haxx.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -36,4 +36,3 @@ char *add_file_name_to_url(CURL *curl, char *url, const char *filename);
 CURLcode get_url_file_name(char **filename, const char *url);
 
 #endif /* HEADER_CURL_TOOL_OPERHLP_H */
-

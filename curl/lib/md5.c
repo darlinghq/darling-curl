@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2015, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2019, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at http://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.haxx.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -23,6 +23,8 @@
 #include "curl_setup.h"
 
 #ifndef CURL_DISABLE_CRYPTO_AUTH
+
+#include <curl/curl.h>
 
 #include "curl_md5.h"
 #include "curl_hmac.h"
@@ -43,7 +45,7 @@ static void MD5_Init(MD5_CTX * ctx)
 }
 
 static void MD5_Update(MD5_CTX * ctx,
-                       const unsigned char * input,
+                       const unsigned char *input,
                        unsigned int inputLen)
 {
   md5_update(ctx, inputLen, input);
@@ -69,7 +71,7 @@ static void MD5_Init(MD5_CTX * ctx)
 }
 
 static void MD5_Update(MD5_CTX * ctx,
-                       const unsigned char * input,
+                       const unsigned char *input,
                        unsigned int inputLen)
 {
   gcry_md_write(*ctx, input, inputLen);
@@ -81,7 +83,7 @@ static void MD5_Final(unsigned char digest[16], MD5_CTX * ctx)
   gcry_md_close(*ctx);
 }
 
-#elif defined(USE_OPENSSL)
+#elif defined(USE_OPENSSL) && !defined(USE_AMISSL)
 /* When OpenSSL is available we use the MD5-function from OpenSSL */
 #include <openssl/md5.h>
 #include "curl_memory.h"
@@ -122,7 +124,7 @@ static void MD5_Final(unsigned char digest[16], MD5_CTX *ctx)
   CC_MD5_Final(digest, ctx);
 }
 
-#elif defined(_WIN32)
+#elif defined(_WIN32) && !defined(CURL_WINDOWS_APP)
 
 #include <wincrypt.h>
 #include "curl_memory.h"
@@ -161,13 +163,6 @@ static void MD5_Final(unsigned char digest[16], MD5_CTX *ctx)
     CryptReleaseContext(ctx->hCryptProv, 0);
 }
 
-#elif defined(USE_AXTLS)
-#include <axTLS/config.h>
-#include <axTLS/os_int.h>
-#include <axTLS/crypto.h>
-#include "curl_memory.h"
-/* The last #include file should be: */
-#include "memdebug.h"
 #else
 /* When no other crypto library is available we use this code segment */
 /*
@@ -175,7 +170,7 @@ static void MD5_Final(unsigned char digest[16], MD5_CTX *ctx)
  * MD5 Message-Digest Algorithm (RFC 1321).
  *
  * Homepage:
- http://openwall.info/wiki/people/solar/software/public-domain-source-code/md5
+ https://openwall.info/wiki/people/solar/software/public-domain-source-code/md5
  *
  * Author:
  * Alexander Peslyak, better known as Solar Designer <solar at openwall.com>
@@ -258,7 +253,7 @@ static void MD5_Final(unsigned char *result, MD5_CTX *ctx);
  */
 #if defined(__i386__) || defined(__x86_64__) || defined(__vax__)
 #define SET(n) \
-        (*(MD5_u32plus *)&ptr[(n) * 4])
+        (*(MD5_u32plus *)(void *)&ptr[(n) * 4])
 #define GET(n) \
         SET(n)
 #else
@@ -400,7 +395,8 @@ static void MD5_Update(MD5_CTX *ctx, const void *data, unsigned long size)
   unsigned long used, available;
 
   saved_lo = ctx->lo;
-  if((ctx->lo = (saved_lo + size) & 0x1fffffff) < saved_lo)
+  ctx->lo = (saved_lo + size) & 0x1fffffff;
+  if(ctx->lo < saved_lo)
     ctx->hi++;
   ctx->hi += (MD5_u32plus)size >> 29;
 
@@ -483,22 +479,33 @@ static void MD5_Final(unsigned char *result, MD5_CTX *ctx)
 
 const HMAC_params Curl_HMAC_MD5[] = {
   {
-    (HMAC_hinit_func) MD5_Init,           /* Hash initialization function. */
-    (HMAC_hupdate_func) MD5_Update,       /* Hash update function. */
-    (HMAC_hfinal_func) MD5_Final,         /* Hash computation end function. */
-    sizeof(MD5_CTX),                      /* Size of hash context structure. */
-    64,                                   /* Maximum key length. */
-    16                                    /* Result size. */
+    /* Hash initialization function. */
+    CURLX_FUNCTION_CAST(HMAC_hinit_func, MD5_Init),
+    /* Hash update function. */
+    CURLX_FUNCTION_CAST(HMAC_hupdate_func, MD5_Update),
+    /* Hash computation end function. */
+    CURLX_FUNCTION_CAST(HMAC_hfinal_func, MD5_Final),
+    /* Size of hash context structure. */
+    sizeof(MD5_CTX),
+    /* Maximum key length. */
+    64,
+    /* Result size. */
+    16
   }
 };
 
 const MD5_params Curl_DIGEST_MD5[] = {
   {
-    (Curl_MD5_init_func) MD5_Init,      /* Digest initialization function */
-    (Curl_MD5_update_func) MD5_Update,  /* Digest update function */
-    (Curl_MD5_final_func) MD5_Final,    /* Digest computation end function */
-    sizeof(MD5_CTX),                    /* Size of digest context struct */
-    16                                  /* Result size */
+    /* Digest initialization function */
+    CURLX_FUNCTION_CAST(Curl_MD5_init_func, MD5_Init),
+    /* Digest update function */
+    CURLX_FUNCTION_CAST(Curl_MD5_update_func, MD5_Update),
+    /* Digest computation end function */
+    CURLX_FUNCTION_CAST(Curl_MD5_final_func, MD5_Final),
+    /* Size of digest context struct */
+    sizeof(MD5_CTX),
+    /* Result size */
+    16
   }
 };
 
@@ -519,7 +526,7 @@ MD5_context *Curl_MD5_init(const MD5_params *md5params)
   MD5_context *ctxt;
 
   /* Create MD5 context */
-  ctxt = malloc(sizeof *ctxt);
+  ctxt = malloc(sizeof(*ctxt));
 
   if(!ctxt)
     return ctxt;

@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2015, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2018, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at http://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.haxx.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -21,32 +21,46 @@
  ***************************************************************************/
 #include "tool_setup.h"
 
-#include "rawstr.h"
+#include "strcase.h"
 
 #define ENABLE_CURLX_PRINTF
 /* use our own printf() functions */
 #include "curlx.h"
 
 #include "tool_cfgable.h"
+#include "tool_doswin.h"
 #include "tool_msgs.h"
 #include "tool_cb_hdr.h"
+#include "tool_cb_wrt.h"
 
 #include "memdebug.h" /* keep this as LAST include */
 
 static char *parse_filename(const char *ptr, size_t len);
 
+#ifdef WIN32
+#define BOLD
+#define BOLDOFF
+#else
+#define BOLD "\x1b[1m"
+/* Switch off bold by setting "all attributes off" since the explicit
+   bold-off code (21) isn't supported everywhere - like in the mac
+   Terminal. */
+#define BOLDOFF "\x1b[0m"
+#endif
+
 /*
 ** callback for CURLOPT_HEADERFUNCTION
 */
 
-size_t tool_header_cb(void *ptr, size_t size, size_t nmemb, void *userdata)
+size_t tool_header_cb(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
   struct HdrCbData *hdrcbdata = userdata;
   struct OutStruct *outs = hdrcbdata->outs;
   struct OutStruct *heads = hdrcbdata->heads;
   const char *str = ptr;
   const size_t cb = size * nmemb;
-  const char *end = (char*)ptr + cb;
+  const char *end = (char *)ptr + cb;
+  long protocol = 0;
 
   /*
    * Once that libcurl has called back tool_header_cb() the returned value
@@ -54,7 +68,7 @@ size_t tool_header_cb(void *ptr, size_t size, size_t nmemb, void *userdata)
    * it does not match then it fails with CURLE_WRITE_ERROR. So at this
    * point returning a value different from sz*nmemb indicates failure.
    */
-  size_t failure = (size * nmemb) ? 0 : 1;
+  size_t failure = (size && nmemb) ? 0 : 1;
 
   if(!heads->config)
     return failure;
@@ -75,6 +89,8 @@ size_t tool_header_cb(void *ptr, size_t size, size_t nmemb, void *userdata)
     size_t rc = fwrite(ptr, size, nmemb, heads->stream);
     if(rc != cb)
       return rc;
+    /* flush the stream to send off what we got earlier */
+    (void)fflush(heads->stream);
   }
 
   /*
@@ -84,8 +100,10 @@ size_t tool_header_cb(void *ptr, size_t size, size_t nmemb, void *userdata)
    * Content-Disposition header specifying a filename property.
    */
 
+  curl_easy_getinfo(outs->config->easy, CURLINFO_PROTOCOL, &protocol);
   if(hdrcbdata->honor_cd_filename &&
-     (cb > 20) && checkprefix("Content-disposition:", str)) {
+     (cb > 20) && checkprefix("Content-disposition:", str) &&
+     (protocol & (CURLPROTO_HTTPS|CURLPROTO_HTTP))) {
     const char *p = str + 20;
 
     /* look for the 'filename=' parameter
@@ -113,20 +131,61 @@ size_t tool_header_cb(void *ptr, size_t size, size_t nmemb, void *userdata)
       len = (ssize_t)cb - (p - str);
       filename = parse_filename(p, len);
       if(filename) {
-        outs->filename = filename;
-        outs->alloc_filename = TRUE;
+        if(outs->stream) {
+          int rc;
+          /* already opened and possibly written to */
+          if(outs->fopened)
+            fclose(outs->stream);
+          outs->stream = NULL;
+
+          /* rename the initial file name to the new file name */
+          rc = rename(outs->filename, filename);
+          if(rc != 0) {
+            warnf(outs->config->global, "Failed to rename %s -> %s: %s\n",
+                  outs->filename, filename, strerror(errno));
+          }
+          if(outs->alloc_filename)
+            Curl_safefree(outs->filename);
+          if(rc != 0) {
+            free(filename);
+            return failure;
+          }
+        }
         outs->is_cd_filename = TRUE;
         outs->s_isreg = TRUE;
         outs->fopened = FALSE;
-        outs->stream = NULL;
-        hdrcbdata->honor_cd_filename = FALSE;
-        break;
+        outs->filename = filename;
+        outs->alloc_filename = TRUE;
+        hdrcbdata->honor_cd_filename = FALSE; /* done now! */
+        if(!tool_create_output_file(outs))
+          return failure;
       }
-      else
-        return failure;
+      break;
     }
+    if(!outs->stream && !tool_create_output_file(outs))
+      return failure;
   }
 
+  if(hdrcbdata->config->show_headers &&
+    (protocol &
+     (CURLPROTO_HTTP|CURLPROTO_HTTPS|CURLPROTO_RTSP|CURLPROTO_FILE))) {
+    /* bold headers only for selected protocols */
+    char *value = NULL;
+
+    if(!outs->stream && !tool_create_output_file(outs))
+      return failure;
+
+    if(hdrcbdata->global->isatty && hdrcbdata->global->styled_output)
+      value = memchr(ptr, ':', cb);
+    if(value) {
+      size_t namelen = value - ptr;
+      fprintf(outs->stream, BOLD "%.*s" BOLDOFF ":", namelen, ptr);
+      fwrite(&value[1], cb - namelen - 1, 1, outs->stream);
+    }
+    else
+      /* not "handled", just show it */
+      fwrite(ptr, cb, 1, outs->stream);
+  }
   return cb;
 }
 
@@ -141,7 +200,7 @@ static char *parse_filename(const char *ptr, size_t len)
   char  stop = '\0';
 
   /* simple implementation of strndup() */
-  copy = malloc(len+1);
+  copy = malloc(len + 1);
   if(!copy)
     return NULL;
   memcpy(copy, ptr, len);
@@ -156,8 +215,13 @@ static char *parse_filename(const char *ptr, size_t len)
   else
     stop = ';';
 
+  /* scan for the end letter and stop there */
+  q = strchr(p, stop);
+  if(q)
+    *q = '\0';
+
   /* if the filename contains a path, only use filename portion */
-  q = strrchr(copy, '/');
+  q = strrchr(p, '/');
   if(q) {
     p = q + 1;
     if(!*p) {
@@ -178,17 +242,6 @@ static char *parse_filename(const char *ptr, size_t len)
     }
   }
 
-  /* scan for the end letter and stop there */
-  q = p;
-  while(*q) {
-    if(q[1] && (q[0] == '\\'))
-      q++;
-    else if(q[0] == stop)
-      break;
-    q++;
-  }
-  *q = '\0';
-
   /* make sure the file name doesn't end in \r or \n */
   q = strchr(p, '\r');
   if(q)
@@ -201,7 +254,18 @@ static char *parse_filename(const char *ptr, size_t len)
   if(copy != p)
     memmove(copy, p, strlen(p) + 1);
 
-  /* in case we built debug enabled, we allow an evironment variable
+#if defined(MSDOS) || defined(WIN32)
+  {
+    char *sanitized;
+    SANITIZEcode sc = sanitize_file_name(&sanitized, copy, 0);
+    Curl_safefree(copy);
+    if(sc)
+      return NULL;
+    copy = sanitized;
+  }
+#endif /* MSDOS || WIN32 */
+
+  /* in case we built debug enabled, we allow an environment variable
    * named CURL_TESTDIR to prefix the given file name to put it into a
    * specific directory
    */
@@ -210,7 +274,7 @@ static char *parse_filename(const char *ptr, size_t len)
     char *tdir = curlx_getenv("CURL_TESTDIR");
     if(tdir) {
       char buffer[512]; /* suitably large */
-      snprintf(buffer, sizeof(buffer), "%s/%s", tdir, copy);
+      msnprintf(buffer, sizeof(buffer), "%s/%s", tdir, copy);
       Curl_safefree(copy);
       copy = strdup(buffer); /* clone the buffer, we don't use the libcurl
                                 aprintf() or similar since we want to use the
@@ -223,4 +287,3 @@ static char *parse_filename(const char *ptr, size_t len)
 
   return copy;
 }
-
