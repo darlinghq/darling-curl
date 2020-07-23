@@ -5,13 +5,18 @@
 /* #undef CURLDEBUG */
 
 /* Location of default ca bundle */
+#ifndef DARLING
 #define CURL_CA_BUNDLE "/etc/ssl/cert.pem"
+#endif
 
 /* define "1" to use built in CA store of SSL library */
 /* #undef CURL_CA_FALLBACK */
 
 /* Location of default ca path */
 /* #undef CURL_CA_PATH */
+#ifdef DARLING
+#define CURL_CA_PATH "/System/Library/OpenSSL/certs"
+#endif
 
 /* Default SSL backend */
 /* #undef CURL_DEFAULT_SSL_BACKEND */

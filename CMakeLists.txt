@@ -11,17 +11,19 @@ add_definitions(-DHAVE_STDINT_H=1)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostdinc -D__DARWIN_UNIX03 -fPIC -w")
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/config_mac)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/curl/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/curl/lib)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../openssl/src/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../zlib)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_definitions(-DHAVE_CONFIG_H=1)
 add_definitions(-DOS="Darling")
 add_definitions(-DCLIENTNAME="libcurl")
 
 set(curl_SRCS
+	curl/lib/altsvc.c
+	curl/lib/amigaos.c
 	curl/lib/asyn-ares.c
 	curl/lib/asyn-thread.c
 	curl/lib/base64.c
@@ -30,6 +32,7 @@ set(curl_SRCS
 	curl/lib/content_encoding.c
 	curl/lib/cookie.c
 	curl/lib/curl_addrinfo.c
+	curl/lib/curl_ctype.c
 	curl/lib/curl_des.c
 	curl/lib/curl_endian.c
 	curl/lib/curl_fnmatch.c
@@ -37,17 +40,16 @@ set(curl_SRCS
 	curl/lib/curl_gssapi.c
 	curl/lib/curl_memrchr.c
 	curl/lib/curl_multibyte.c
-	curl/lib/curl_ntlm.c
 	curl/lib/curl_ntlm_core.c
-	curl/lib/curl_ntlm_msgs.c
 	curl/lib/curl_ntlm_wb.c
+	curl/lib/curl_path.c
+	curl/lib/curl_range.c
 	curl/lib/curl_rtmp.c
 	curl/lib/curl_sasl.c
-	curl/lib/curl_sasl_gssapi.c
-	curl/lib/curl_sasl_sspi.c
 	curl/lib/curl_sspi.c
 	curl/lib/curl_threads.c
 	curl/lib/dict.c
+	curl/lib/doh.c
 	curl/lib/dotdot.c
 	curl/lib/easy.c
 	curl/lib/escape.c
@@ -63,17 +65,17 @@ set(curl_SRCS
 	curl/lib/hmac.c
 	curl/lib/hostasyn.c
 	curl/lib/hostcheck.c
+	curl/lib/hostip.c
 	curl/lib/hostip4.c
 	curl/lib/hostip6.c
-	curl/lib/hostip.c
 	curl/lib/hostsyn.c
-	curl/lib/http2.c
-	curl/lib/http.c
 	curl/lib/http_chunks.c
 	curl/lib/http_digest.c
 	curl/lib/http_negotiate.c
-	curl/lib/http_negotiate_sspi.c
+	curl/lib/http_ntlm.c
 	curl/lib/http_proxy.c
+	curl/lib/http.c
+	curl/lib/http2.c
 	curl/lib/idn_win32.c
 	curl/lib/if2ip.c
 	curl/lib/imap.c
@@ -85,36 +87,39 @@ set(curl_SRCS
 	curl/lib/md4.c
 	curl/lib/md5.c
 	curl/lib/memdebug.c
+	curl/lib/mime.c
 	curl/lib/mprintf.c
 	curl/lib/multi.c
 	curl/lib/netrc.c
 	curl/lib/non-ascii.c
 	curl/lib/nonblock.c
-	curl/lib/nwlib.c
-	curl/lib/nwos.c
 	curl/lib/openldap.c
 	curl/lib/parsedate.c
 	curl/lib/pingpong.c
 	curl/lib/pipeline.c
 	curl/lib/pop3.c
 	curl/lib/progress.c
-	curl/lib/rawstr.c
+	curl/lib/psl.c
+	curl/lib/rand.c
 	curl/lib/rtsp.c
 	curl/lib/security.c
 	curl/lib/select.c
 	curl/lib/sendf.c
+	curl/lib/setopt.c
+	curl/lib/sha256.c
 	curl/lib/share.c
 	curl/lib/slist.c
 	curl/lib/smb.c
 	curl/lib/smtp.c
-	curl/lib/socks.c
 	curl/lib/socks_gssapi.c
 	curl/lib/socks_sspi.c
+	curl/lib/socks.c
 	curl/lib/speedcheck.c
 	curl/lib/splay.c
+	curl/lib/ssh-libssh.c
 	curl/lib/ssh.c
+	curl/lib/strcase.c
 	curl/lib/strdup.c
-	curl/lib/strequal.c
 	curl/lib/strerror.c
 	curl/lib/strtok.c
 	curl/lib/strtoofft.c
@@ -123,17 +128,43 @@ set(curl_SRCS
 	curl/lib/timeval.c
 	curl/lib/transfer.c
 	curl/lib/url.c
+	curl/lib/urlapi.c
+	curl/lib/vauth/cleartext.c
+	curl/lib/vauth/cram.c
+	curl/lib/vauth/digest_sspi.c
+	curl/lib/vauth/digest.c
+	curl/lib/vauth/krb5_gssapi.c
+	curl/lib/vauth/krb5_sspi.c
+	curl/lib/vauth/ntlm_sspi.c
+	curl/lib/vauth/ntlm.c
+	curl/lib/vauth/oauth2.c
+	curl/lib/vauth/spnego_gssapi.c
+	curl/lib/vauth/spnego_sspi.c
+	curl/lib/vauth/vauth.c
 	curl/lib/version.c
+	curl/lib/vtls/cyassl.c
+	curl/lib/vtls/gskit.c
+	curl/lib/vtls/gtls.c
+	curl/lib/vtls/mesalink.c
+	curl/lib/vtls/nss.c
+	curl/lib/vtls/openssl.c
+	curl/lib/vtls/polarssl_threadlock.c
+	curl/lib/vtls/polarssl.c
+	curl/lib/vtls/schannel_verify.c
+	curl/lib/vtls/schannel.c
+	curl/lib/vtls/sectransp.c
+	curl/lib/vtls/vtls.c
 	curl/lib/warnless.c
 	curl/lib/wildcard.c
 	curl/lib/x509asn1.c
-	#curl/lib/vtls/openssl.c
-	curl/lib/vtls/vtls.c
-
-	curl/lib/vtls/darwinssl.c
 )
 
 set(curlexe_SRCS
+	curl/lib/curl_ctype.c
+	curl/lib/nonblock.c
+	curl/lib/strtoofft.c
+	curl/lib/warnless.c
+	curl/src/slist_wc.c
 	curl/src/tool_binmode.c
 	curl/src/tool_bname.c
 	curl/src/tool_cb_dbg.c
@@ -147,6 +178,7 @@ set(curlexe_SRCS
 	curl/src/tool_dirhie.c
 	curl/src/tool_doswin.c
 	curl/src/tool_easysrc.c
+	curl/src/tool_filetime.c
 	curl/src/tool_formparse.c
 	curl/src/tool_getparam.c
 	curl/src/tool_getpass.c
@@ -157,7 +189,6 @@ set(curlexe_SRCS
 	curl/src/tool_libinfo.c
 	curl/src/tool_main.c
 	curl/src/tool_metalink.c
-	curl/src/tool_mfiles.c
 	curl/src/tool_msgs.c
 	curl/src/tool_operate.c
 	curl/src/tool_operhlp.c
@@ -169,8 +200,7 @@ set(curlexe_SRCS
 	curl/src/tool_strdup.c
 	curl/src/tool_urlglob.c
 	curl/src/tool_util.c
-	# curl/src/tool_vms.c
-	curl/src/tool_writeenv.c
+	curl/src/tool_vms.c
 	curl/src/tool_writeout.c
 	curl/src/tool_xattr.c
 )
@@ -179,18 +209,23 @@ include(darling_exe)
 
 set(DYLIB_INSTALL_NAME "/usr/lib/libcurl.4.dylib")
 set(DYLIB_COMPAT_VERSION "7.0.0")
-set(DYLIB_CURRENT_VERSION "8.0.0")
+set(DYLIB_CURRENT_VERSION "9.0.0")
 
 add_darling_library(curl SHARED ${curl_SRCS})
 make_fat(curl)
-target_link_libraries(curl PRIVATE system ssl098 z CoreFoundation Security)
+target_link_libraries(curl PRIVATE system crypto44 ssl46 z nghttp2 CoreFoundation Security LDAP Kerberos)
 set_target_properties(curl PROPERTIES OUTPUT_NAME "curl.4")
+
+target_compile_definitions(curl PRIVATE
+	BUILDING_LIBCURL
+	CURL_HIDDEN_SYMBOLS
+)
 
 if (NOT DARLING_NO_EXECUTABLES)
     add_darling_executable(curlexe ${curlexe_SRCS})
     target_link_libraries(curlexe system curl z)
     set_target_properties(curlexe PROPERTIES OUTPUT_NAME curl)
-    
+
     install(TARGETS curlexe DESTINATION libexec/darling/usr/bin)
 endif (NOT DARLING_NO_EXECUTABLES)
 
