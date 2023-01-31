@@ -79,6 +79,10 @@
 */
 #define RESP_TIMEOUT (120*1000)
 
+/* Max string intput length is a precaution against abuse and to detect junk
+   input easier and better. */
+#define CURL_MAX_INPUT_LENGTH 8000000
+
 #include "cookie.h"
 #include "psl.h"
 #include "formdata.h"
@@ -1256,7 +1260,7 @@ struct UrlState {
   /* buffers to store authentication data in, as parsed from input options */
   struct curltime keeps_speed; /* for the progress meter really */
 
-  struct connectdata *lastconnect; /* The last connection, NULL if undefined */
+  long lastconnect_id; /* The last connection, -1 if undefined */
 
   char *headerbuff; /* allocated buffer to store headers in */
   size_t headersize;   /* size of the allocation */
