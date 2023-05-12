@@ -444,6 +444,7 @@ CURLcode Curl_init_userdefined(struct Curl_easy *data)
   set->ftp_use_eprt = TRUE;   /* FTP defaults to EPRT operations */
   set->ftp_use_pret = FALSE;  /* mainly useful for drftpd servers */
   set->ftp_filemethod = FTPFILE_MULTICWD;
+  set->ftp_skip_ip = TRUE;    /* skip PASV IP by default */
 
   set->dns_cache_timeout = 60; /* Timeout every 60 seconds by default */
 
@@ -606,7 +607,7 @@ CURLcode Curl_open(struct Curl_easy **curl)
       Curl_initinfo(data);
 
       /* most recent connection is not yet defined */
-      data->state.lastconnect = NULL;
+      data->state.lastconnect_id = -1;
 
       data->progress.flags |= PGRS_HIDE;
       data->state.current_speed = -1; /* init to negative == impossible */
@@ -3111,12 +3112,14 @@ static CURLcode override_login(struct Curl_easy *data,
 
   /* for updated strings, we update them in the URL */
   if(user_changed) {
-    uc = curl_url_set(data->state.uh, CURLUPART_USER, *userp, 0);
+    uc = curl_url_set(data->state.uh, CURLUPART_USER, *userp,
+                      CURLU_URLENCODE);
     if(uc)
       return Curl_uc_to_curlcode(uc);
   }
   if(passwd_changed) {
-    uc = curl_url_set(data->state.uh, CURLUPART_PASSWORD, *passwdp, 0);
+    uc = curl_url_set(data->state.uh, CURLUPART_PASSWORD, *passwdp,
+                      CURLU_URLENCODE);
     if(uc)
       return Curl_uc_to_curlcode(uc);
   }
