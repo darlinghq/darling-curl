@@ -146,7 +146,7 @@
 #define CURL_SA_FAMILY_T sa_family_t
 
 /* built with multiple SSL backends */
-#define CURL_WITH_MULTI_SSL 1
+/* #undef CURL_WITH_MULTI_SSL */
 
 /* enable debug build options */
 /* #undef DEBUGBUILD */

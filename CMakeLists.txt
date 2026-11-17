@@ -231,9 +231,12 @@ make_fat(curl)
 target_link_libraries(curl PRIVATE system crypto46 ssl48 z nghttp2 CoreFoundation SystemConfiguration Security LDAP Kerberos)
 set_target_properties(curl PROPERTIES OUTPUT_NAME "curl.4")
 
+# LIBRESSL_HAS_TLS1_3 makes LibreSSL's headers declare the TLS 1.3 version
+# constants, which curl uses to offer TLS 1.3 (--tlsv1.3).
 target_compile_definitions(curl PRIVATE
 	BUILDING_LIBCURL
 	CURL_HIDDEN_SYMBOLS
+	LIBRESSL_HAS_TLS1_3
 )
 
 if (NOT DARLING_NO_EXECUTABLES)
