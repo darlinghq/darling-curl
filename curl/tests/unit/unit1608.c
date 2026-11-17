@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2019, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -18,13 +18,17 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
+ * SPDX-License-Identifier: curl
+ *
  ***************************************************************************/
 #include "curlcheck.h"
 
 #include "hostip.h"
 
+#ifndef CURL_DISABLE_SHUFFLE_DNS
+
 CURLcode Curl_shuffle_addr(struct Curl_easy *data,
-                           Curl_addrinfo **addr);
+                           struct Curl_addrinfo **addr);
 
 #define NUM_ADDRS 8
 static struct Curl_addrinfo addrs[NUM_ADDRS];
@@ -41,14 +45,14 @@ static CURLcode unit_setup(void)
 
 static void unit_stop(void)
 {
-
+  curl_global_cleanup();
 }
 
 UNITTEST_START
-{
+
   int i;
   CURLcode code;
-  struct Curl_addrinfo* addrhead = addrs;
+  struct Curl_addrinfo *addrhead = addrs;
 
   struct Curl_easy *easy = curl_easy_init();
   abort_unless(easy, "out of memory");
@@ -65,9 +69,21 @@ UNITTEST_START
   }
 
   curl_easy_cleanup(easy);
+  curl_global_cleanup();
 
   abort_unless(addrhead != addrs, "addresses are not being reordered");
 
-  return 0;
-}
 UNITTEST_STOP
+
+#else
+static CURLcode unit_setup(void)
+{
+  return CURLE_OK;
+}
+static void unit_stop(void)
+{
+}
+UNITTEST_START
+UNITTEST_STOP
+
+#endif

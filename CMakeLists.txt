@@ -7,35 +7,57 @@ if(COMMAND cmake_policy)
 	cmake_policy(SET CMP0005 NEW)
 endif(COMMAND cmake_policy)
 
-add_definitions(-DHAVE_STDINT_H=1)
-
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostdinc -D__DARWIN_UNIX03 -fPIC -w")
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/config_mac)
+# config_darling/curl_config.h is Apple's config_mac/curl_config.h with
+# SecureTransport disabled: LibreSSL is the only TLS backend.
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/config_darling)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/curl/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/curl/lib)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/curl/src)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_definitions(-DHAVE_CONFIG_H=1)
-add_definitions(-DOS="Darling")
+add_definitions(-DOS="x86_64-apple-darwin")
 add_definitions(-DCLIENTNAME="libcurl")
 
 set(curl_SRCS
+	curl/lib/vauth/cleartext.c
+	curl/lib/vauth/cram.c
+	curl/lib/vauth/digest.c
+	curl/lib/vauth/krb5_gssapi.c
+	curl/lib/vauth/ntlm.c
+	curl/lib/vauth/oauth2.c
+	curl/lib/vauth/spnego_gssapi.c
+	curl/lib/vauth/vauth.c
+	curl/lib/vtls/hostcheck.c
+	curl/lib/vtls/keylog.c
+	curl/lib/vtls/openssl.c
+	curl/lib/vtls/vtls.c
+	curl/lib/vtls/x509asn1.c
+	curl/lib/vquic/vquic.c
+	curl/lib/vquic/vquic-tls.c
 	curl/lib/altsvc.c
-	curl/lib/amigaos.c
 	curl/lib/asyn-ares.c
 	curl/lib/asyn-thread.c
 	curl/lib/base64.c
+	curl/lib/bufq.c
+	curl/lib/bufref.c
+	curl/lib/cf-h1-proxy.c
+	curl/lib/cf-h2-proxy.c
+	curl/lib/cf-haproxy.c
+	curl/lib/cf-https-connect.c
+	curl/lib/cf-socket.c
+	curl/lib/cfilters.c
 	curl/lib/conncache.c
 	curl/lib/connect.c
 	curl/lib/content_encoding.c
 	curl/lib/cookie.c
 	curl/lib/curl_addrinfo.c
-	curl/lib/curl_ctype.c
 	curl/lib/curl_des.c
 	curl/lib/curl_endian.c
 	curl/lib/curl_fnmatch.c
+	curl/lib/curl_get_line.c
 	curl/lib/curl_gethostname.c
 	curl/lib/curl_gssapi.c
 	curl/lib/curl_memrchr.c
@@ -44,17 +66,22 @@ set(curl_SRCS
 	curl/lib/curl_ntlm_wb.c
 	curl/lib/curl_path.c
 	curl/lib/curl_range.c
-	curl/lib/curl_rtmp.c
 	curl/lib/curl_sasl.c
-	curl/lib/curl_sspi.c
+	curl/lib/curl_sha512_256.c
 	curl/lib/curl_threads.c
+	curl/lib/curl_trc.c
+	curl/lib/cw-out.c
 	curl/lib/dict.c
 	curl/lib/doh.c
-	curl/lib/dotdot.c
+	curl/lib/dynbuf.c
+	curl/lib/dynhds.c
 	curl/lib/easy.c
+	curl/lib/easygetopt.c
+	curl/lib/easyoptions.c
 	curl/lib/escape.c
 	curl/lib/file.c
 	curl/lib/fileinfo.c
+	curl/lib/fopen.c
 	curl/lib/formdata.c
 	curl/lib/ftp.c
 	curl/lib/ftplistparser.c
@@ -62,21 +89,24 @@ set(curl_SRCS
 	curl/lib/getinfo.c
 	curl/lib/gopher.c
 	curl/lib/hash.c
+	curl/lib/headers.c
 	curl/lib/hmac.c
 	curl/lib/hostasyn.c
-	curl/lib/hostcheck.c
 	curl/lib/hostip.c
 	curl/lib/hostip4.c
 	curl/lib/hostip6.c
 	curl/lib/hostsyn.c
+	curl/lib/hsts.c
+	curl/lib/http.c
+	curl/lib/http1.c
+	curl/lib/http2.c
+	curl/lib/http_aws_sigv4.c
 	curl/lib/http_chunks.c
 	curl/lib/http_digest.c
 	curl/lib/http_negotiate.c
 	curl/lib/http_ntlm.c
 	curl/lib/http_proxy.c
-	curl/lib/http.c
-	curl/lib/http2.c
-	curl/lib/idn_win32.c
+	curl/lib/idn.c
 	curl/lib/if2ip.c
 	curl/lib/imap.c
 	curl/lib/inet_ntop.c
@@ -84,25 +114,27 @@ set(curl_SRCS
 	curl/lib/krb5.c
 	curl/lib/ldap.c
 	curl/lib/llist.c
+	curl/lib/macos.c
 	curl/lib/md4.c
 	curl/lib/md5.c
 	curl/lib/memdebug.c
 	curl/lib/mime.c
 	curl/lib/mprintf.c
+	curl/lib/mqtt.c
 	curl/lib/multi.c
 	curl/lib/netrc.c
-	curl/lib/non-ascii.c
 	curl/lib/nonblock.c
+	curl/lib/noproxy.c
 	curl/lib/openldap.c
 	curl/lib/parsedate.c
 	curl/lib/pingpong.c
-	curl/lib/pipeline.c
 	curl/lib/pop3.c
 	curl/lib/progress.c
 	curl/lib/psl.c
 	curl/lib/rand.c
+	curl/lib/rename.c
+	curl/lib/request.c
 	curl/lib/rtsp.c
-	curl/lib/security.c
 	curl/lib/select.c
 	curl/lib/sendf.c
 	curl/lib/setopt.c
@@ -111,58 +143,37 @@ set(curl_SRCS
 	curl/lib/slist.c
 	curl/lib/smb.c
 	curl/lib/smtp.c
+	curl/lib/socketpair.c
+	curl/lib/socks.c
 	curl/lib/socks_gssapi.c
 	curl/lib/socks_sspi.c
-	curl/lib/socks.c
 	curl/lib/speedcheck.c
 	curl/lib/splay.c
-	curl/lib/ssh-libssh.c
-	curl/lib/ssh.c
 	curl/lib/strcase.c
 	curl/lib/strdup.c
 	curl/lib/strerror.c
 	curl/lib/strtok.c
 	curl/lib/strtoofft.c
+	curl/lib/system_win32.c
 	curl/lib/telnet.c
 	curl/lib/tftp.c
+	curl/lib/timediff.c
 	curl/lib/timeval.c
 	curl/lib/transfer.c
 	curl/lib/url.c
 	curl/lib/urlapi.c
-	curl/lib/vauth/cleartext.c
-	curl/lib/vauth/cram.c
-	curl/lib/vauth/digest_sspi.c
-	curl/lib/vauth/digest.c
-	curl/lib/vauth/krb5_gssapi.c
-	curl/lib/vauth/krb5_sspi.c
-	curl/lib/vauth/ntlm_sspi.c
-	curl/lib/vauth/ntlm.c
-	curl/lib/vauth/oauth2.c
-	curl/lib/vauth/spnego_gssapi.c
-	curl/lib/vauth/spnego_sspi.c
-	curl/lib/vauth/vauth.c
 	curl/lib/version.c
-	curl/lib/vtls/cyassl.c
-	curl/lib/vtls/gskit.c
-	curl/lib/vtls/gtls.c
-	curl/lib/vtls/mesalink.c
-	curl/lib/vtls/nss.c
-	curl/lib/vtls/openssl.c
-	curl/lib/vtls/polarssl_threadlock.c
-	curl/lib/vtls/polarssl.c
-	curl/lib/vtls/schannel_verify.c
-	curl/lib/vtls/schannel.c
-	curl/lib/vtls/sectransp.c
-	curl/lib/vtls/vtls.c
 	curl/lib/warnless.c
-	curl/lib/wildcard.c
-	curl/lib/x509asn1.c
+	curl/lib/ws.c
 )
 
 set(curlexe_SRCS
-	curl/lib/curl_ctype.c
+	curl/lib/base64.c
+	curl/lib/curl_multibyte.c
+	curl/lib/dynbuf.c
 	curl/lib/nonblock.c
 	curl/lib/strtoofft.c
+	curl/lib/timediff.c
 	curl/lib/warnless.c
 	curl/src/slist_wc.c
 	curl/src/tool_binmode.c
@@ -174,52 +185,62 @@ set(curlexe_SRCS
 	curl/src/tool_cb_see.c
 	curl/src/tool_cb_wrt.c
 	curl/src/tool_cfgable.c
-	curl/src/tool_convert.c
 	curl/src/tool_dirhie.c
 	curl/src/tool_doswin.c
 	curl/src/tool_easysrc.c
 	curl/src/tool_filetime.c
+	curl/src/tool_findfile.c
 	curl/src/tool_formparse.c
 	curl/src/tool_getparam.c
 	curl/src/tool_getpass.c
 	curl/src/tool_help.c
 	curl/src/tool_helpers.c
-	curl/src/tool_homedir.c
 	curl/src/tool_hugehelp.c
+	curl/src/tool_ipfs.c
 	curl/src/tool_libinfo.c
+	curl/src/tool_listhelp.c
 	curl/src/tool_main.c
-	curl/src/tool_metalink.c
 	curl/src/tool_msgs.c
 	curl/src/tool_operate.c
 	curl/src/tool_operhlp.c
-	curl/src/tool_panykey.c
 	curl/src/tool_paramhlp.c
 	curl/src/tool_parsecfg.c
+	curl/src/tool_progress.c
 	curl/src/tool_setopt.c
 	curl/src/tool_sleep.c
+	curl/src/tool_stderr.c
 	curl/src/tool_strdup.c
 	curl/src/tool_urlglob.c
 	curl/src/tool_util.c
 	curl/src/tool_vms.c
 	curl/src/tool_writeout.c
+	curl/src/tool_writeout_json.c
 	curl/src/tool_xattr.c
+	curl/src/var.c
 )
 
 include(darling_exe)
 
+# The compatibility and current versions follow Apple's libcurl-version.xcconfig.
 set(DYLIB_INSTALL_NAME "/usr/lib/libcurl.4.dylib")
 set(DYLIB_COMPAT_VERSION "7.0.0")
 set(DYLIB_CURRENT_VERSION "9.0.0")
 
 add_darling_library(curl SHARED ${curl_SRCS})
 make_fat(curl)
-target_link_libraries(curl PRIVATE system crypto46 ssl48 z nghttp2 CoreFoundation Security LDAP Kerberos)
+target_link_libraries(curl PRIVATE system crypto46 ssl48 z nghttp2 CoreFoundation SystemConfiguration Security LDAP Kerberos)
 set_target_properties(curl PROPERTIES OUTPUT_NAME "curl.4")
 
+# LIBRESSL_HAS_TLS1_3 makes LibreSSL's headers declare the TLS 1.3 version
+# constants, which curl uses to offer TLS 1.3 (--tlsv1.3).
 target_compile_definitions(curl PRIVATE
 	BUILDING_LIBCURL
 	CURL_HIDDEN_SYMBOLS
+	LIBRESSL_HAS_TLS1_3
 )
+
+# Only the functions marked CURL_EXTERN are exported, as in Apple's build.
+target_compile_options(curl PRIVATE -fvisibility=hidden)
 
 if (NOT DARLING_NO_EXECUTABLES)
     add_darling_executable(curlexe ${curlexe_SRCS})
@@ -233,300 +254,10 @@ install(TARGETS curl DESTINATION libexec/darling/usr/lib)
 InstallSymlink("libcurl.4.dylib" "${CMAKE_INSTALL_PREFIX}/libexec/darling/usr/lib/libcurl.3.dylib")
 InstallSymlink("libcurl.4.dylib" "${CMAKE_INSTALL_PREFIX}/libexec/darling/usr/lib/libcurl.dylib")
 
-set(man1
-	curl/docs/curl-config.1
-	curl/docs/curl.1
-)
-
+file(GLOB man1 ${CMAKE_CURRENT_SOURCE_DIR}/curl/docs/curl.1 ${CMAKE_CURRENT_SOURCE_DIR}/curl/docs/curl-config.1)
 install(FILES ${man1} DESTINATION libexec/darling/usr/share/man/man1)
 
-set(man3
-    curl/docs/libcurl/curl_easy_cleanup.3
-    curl/docs/libcurl/curl_easy_duphandle.3
-    curl/docs/libcurl/curl_easy_escape.3
-    curl/docs/libcurl/curl_easy_getinfo.3
-    curl/docs/libcurl/curl_easy_init.3
-    curl/docs/libcurl/curl_easy_pause.3
-    curl/docs/libcurl/curl_easy_perform.3
-    curl/docs/libcurl/curl_easy_recv.3
-    curl/docs/libcurl/curl_easy_reset.3
-    curl/docs/libcurl/curl_easy_send.3
-    curl/docs/libcurl/curl_easy_setopt.3
-    curl/docs/libcurl/curl_easy_strerror.3
-    curl/docs/libcurl/curl_easy_unescape.3
-    curl/docs/libcurl/curl_escape.3
-    curl/docs/libcurl/curl_formadd.3
-    curl/docs/libcurl/curl_formfree.3
-    curl/docs/libcurl/curl_formget.3
-    curl/docs/libcurl/curl_free.3
-    curl/docs/libcurl/curl_getdate.3
-    curl/docs/libcurl/curl_getenv.3
-    curl/docs/libcurl/curl_global_cleanup.3
-    curl/docs/libcurl/curl_global_init.3
-    curl/docs/libcurl/curl_global_init_mem.3
-    curl/docs/libcurl/curl_mprintf.3
-    curl/docs/libcurl/curl_multi_add_handle.3
-    curl/docs/libcurl/curl_multi_assign.3
-    curl/docs/libcurl/curl_multi_cleanup.3
-    curl/docs/libcurl/curl_multi_fdset.3
-    curl/docs/libcurl/curl_multi_info_read.3
-    curl/docs/libcurl/curl_multi_init.3
-    curl/docs/libcurl/curl_multi_perform.3
-    curl/docs/libcurl/curl_multi_remove_handle.3
-    curl/docs/libcurl/curl_multi_setopt.3
-    curl/docs/libcurl/curl_multi_socket.3
-    curl/docs/libcurl/curl_multi_socket_action.3
-    curl/docs/libcurl/curl_multi_strerror.3
-    curl/docs/libcurl/curl_multi_timeout.3
-    curl/docs/libcurl/curl_multi_wait.3
-    curl/docs/libcurl/curl_share_cleanup.3
-    curl/docs/libcurl/curl_share_init.3
-    curl/docs/libcurl/curl_share_setopt.3
-    curl/docs/libcurl/curl_share_strerror.3
-    curl/docs/libcurl/curl_slist_append.3
-    curl/docs/libcurl/curl_slist_free_all.3
-    curl/docs/libcurl/curl_strequal.3
-    curl/docs/libcurl/curl_unescape.3
-    curl/docs/libcurl/curl_version.3
-    curl/docs/libcurl/curl_version_info.3
-    curl/docs/libcurl/libcurl-easy.3
-    curl/docs/libcurl/libcurl-errors.3
-    curl/docs/libcurl/libcurl-multi.3
-    curl/docs/libcurl/libcurl-share.3
-    curl/docs/libcurl/libcurl-symbols.3
-    curl/docs/libcurl/libcurl-tutorial.3
-    curl/docs/libcurl/libcurl.3
-    curl/docs/libcurl/opts/CURLMOPT_CHUNK_LENGTH_PENALTY_SIZE.3
-    curl/docs/libcurl/opts/CURLMOPT_CONTENT_LENGTH_PENALTY_SIZE.3
-    curl/docs/libcurl/opts/CURLMOPT_MAXCONNECTS.3
-    curl/docs/libcurl/opts/CURLMOPT_MAX_HOST_CONNECTIONS.3
-    curl/docs/libcurl/opts/CURLMOPT_MAX_PIPELINE_LENGTH.3
-    curl/docs/libcurl/opts/CURLMOPT_MAX_TOTAL_CONNECTIONS.3
-    curl/docs/libcurl/opts/CURLMOPT_PIPELINING.3
-    curl/docs/libcurl/opts/CURLMOPT_PIPELINING_SERVER_BL.3
-    curl/docs/libcurl/opts/CURLMOPT_PIPELINING_SITE_BL.3
-    curl/docs/libcurl/opts/CURLMOPT_SOCKETDATA.3
-    curl/docs/libcurl/opts/CURLMOPT_SOCKETFUNCTION.3
-    curl/docs/libcurl/opts/CURLMOPT_TIMERDATA.3
-    curl/docs/libcurl/opts/CURLMOPT_TIMERFUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_ACCEPTTIMEOUT_MS.3
-    curl/docs/libcurl/opts/CURLOPT_ACCEPT_ENCODING.3
-    curl/docs/libcurl/opts/CURLOPT_ADDRESS_SCOPE.3
-    curl/docs/libcurl/opts/CURLOPT_APPEND.3
-    curl/docs/libcurl/opts/CURLOPT_AUTOREFERER.3
-    curl/docs/libcurl/opts/CURLOPT_BUFFERSIZE.3
-    curl/docs/libcurl/opts/CURLOPT_CAINFO.3
-    curl/docs/libcurl/opts/CURLOPT_CAPATH.3
-    curl/docs/libcurl/opts/CURLOPT_CERTINFO.3
-    curl/docs/libcurl/opts/CURLOPT_CHUNK_BGN_FUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_CHUNK_DATA.3
-    curl/docs/libcurl/opts/CURLOPT_CHUNK_END_FUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_CLOSESOCKETDATA.3
-    curl/docs/libcurl/opts/CURLOPT_CLOSESOCKETFUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_CONNECTTIMEOUT.3
-    curl/docs/libcurl/opts/CURLOPT_CONNECTTIMEOUT_MS.3
-    curl/docs/libcurl/opts/CURLOPT_CONNECT_ONLY.3
-    curl/docs/libcurl/opts/CURLOPT_CONV_FROM_NETWORK_FUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_CONV_FROM_UTF8_FUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_CONV_TO_NETWORK_FUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_COOKIE.3
-    curl/docs/libcurl/opts/CURLOPT_COOKIEFILE.3
-    curl/docs/libcurl/opts/CURLOPT_COOKIEJAR.3
-    curl/docs/libcurl/opts/CURLOPT_COOKIELIST.3
-    curl/docs/libcurl/opts/CURLOPT_COOKIESESSION.3
-    curl/docs/libcurl/opts/CURLOPT_COPYPOSTFIELDS.3
-    curl/docs/libcurl/opts/CURLOPT_CRLF.3
-    curl/docs/libcurl/opts/CURLOPT_CRLFILE.3
-    curl/docs/libcurl/opts/CURLOPT_CUSTOMREQUEST.3
-    curl/docs/libcurl/opts/CURLOPT_DEBUGDATA.3
-    curl/docs/libcurl/opts/CURLOPT_DEBUGFUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_DIRLISTONLY.3
-    curl/docs/libcurl/opts/CURLOPT_DNS_CACHE_TIMEOUT.3
-    curl/docs/libcurl/opts/CURLOPT_DNS_INTERFACE.3
-    curl/docs/libcurl/opts/CURLOPT_DNS_LOCAL_IP4.3
-    curl/docs/libcurl/opts/CURLOPT_DNS_LOCAL_IP6.3
-    curl/docs/libcurl/opts/CURLOPT_DNS_SERVERS.3
-    curl/docs/libcurl/opts/CURLOPT_DNS_USE_GLOBAL_CACHE.3
-    curl/docs/libcurl/opts/CURLOPT_EGDSOCKET.3
-    curl/docs/libcurl/opts/CURLOPT_ERRORBUFFER.3
-    curl/docs/libcurl/opts/CURLOPT_EXPECT_100_TIMEOUT_MS.3
-    curl/docs/libcurl/opts/CURLOPT_FAILONERROR.3
-    curl/docs/libcurl/opts/CURLOPT_FILETIME.3
-    curl/docs/libcurl/opts/CURLOPT_FNMATCH_DATA.3
-    curl/docs/libcurl/opts/CURLOPT_FNMATCH_FUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_FOLLOWLOCATION.3
-    curl/docs/libcurl/opts/CURLOPT_FORBID_REUSE.3
-    curl/docs/libcurl/opts/CURLOPT_FRESH_CONNECT.3
-    curl/docs/libcurl/opts/CURLOPT_FTPPORT.3
-    curl/docs/libcurl/opts/CURLOPT_FTPSSLAUTH.3
-    curl/docs/libcurl/opts/CURLOPT_FTP_ACCOUNT.3
-    curl/docs/libcurl/opts/CURLOPT_FTP_ALTERNATIVE_TO_USER.3
-    curl/docs/libcurl/opts/CURLOPT_FTP_CREATE_MISSING_DIRS.3
-    curl/docs/libcurl/opts/CURLOPT_FTP_FILEMETHOD.3
-    curl/docs/libcurl/opts/CURLOPT_FTP_RESPONSE_TIMEOUT.3
-    curl/docs/libcurl/opts/CURLOPT_FTP_SKIP_PASV_IP.3
-    curl/docs/libcurl/opts/CURLOPT_FTP_SSL_CCC.3
-    curl/docs/libcurl/opts/CURLOPT_FTP_USE_EPRT.3
-    curl/docs/libcurl/opts/CURLOPT_FTP_USE_EPSV.3
-    curl/docs/libcurl/opts/CURLOPT_FTP_USE_PRET.3
-    curl/docs/libcurl/opts/CURLOPT_GSSAPI_DELEGATION.3
-    curl/docs/libcurl/opts/CURLOPT_HEADER.3
-    curl/docs/libcurl/opts/CURLOPT_HEADERDATA.3
-    curl/docs/libcurl/opts/CURLOPT_HEADERFUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_HEADEROPT.3
-    curl/docs/libcurl/opts/CURLOPT_HTTP200ALIASES.3
-    curl/docs/libcurl/opts/CURLOPT_HTTPAUTH.3
-    curl/docs/libcurl/opts/CURLOPT_HTTPGET.3
-    curl/docs/libcurl/opts/CURLOPT_HTTPHEADER.3
-    curl/docs/libcurl/opts/CURLOPT_HTTPPOST.3
-    curl/docs/libcurl/opts/CURLOPT_HTTPPROXYTUNNEL.3
-    curl/docs/libcurl/opts/CURLOPT_HTTP_CONTENT_DECODING.3
-    curl/docs/libcurl/opts/CURLOPT_HTTP_TRANSFER_DECODING.3
-    curl/docs/libcurl/opts/CURLOPT_HTTP_VERSION.3
-    curl/docs/libcurl/opts/CURLOPT_IGNORE_CONTENT_LENGTH.3
-    curl/docs/libcurl/opts/CURLOPT_INFILESIZE.3
-    curl/docs/libcurl/opts/CURLOPT_INFILESIZE_LARGE.3
-    curl/docs/libcurl/opts/CURLOPT_INTERFACE.3
-    curl/docs/libcurl/opts/CURLOPT_INTERLEAVEDATA.3
-    curl/docs/libcurl/opts/CURLOPT_INTERLEAVEFUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_IOCTLDATA.3
-    curl/docs/libcurl/opts/CURLOPT_IOCTLFUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_IPRESOLVE.3
-    curl/docs/libcurl/opts/CURLOPT_ISSUERCERT.3
-    curl/docs/libcurl/opts/CURLOPT_KEYPASSWD.3
-    curl/docs/libcurl/opts/CURLOPT_KRBLEVEL.3
-    curl/docs/libcurl/opts/CURLOPT_LOCALPORT.3
-    curl/docs/libcurl/opts/CURLOPT_LOCALPORTRANGE.3
-    curl/docs/libcurl/opts/CURLOPT_LOGIN_OPTIONS.3
-    curl/docs/libcurl/opts/CURLOPT_LOW_SPEED_LIMIT.3
-    curl/docs/libcurl/opts/CURLOPT_LOW_SPEED_TIME.3
-    curl/docs/libcurl/opts/CURLOPT_MAIL_AUTH.3
-    curl/docs/libcurl/opts/CURLOPT_MAIL_FROM.3
-    curl/docs/libcurl/opts/CURLOPT_MAIL_RCPT.3
-    curl/docs/libcurl/opts/CURLOPT_MAXCONNECTS.3
-    curl/docs/libcurl/opts/CURLOPT_MAXFILESIZE.3
-    curl/docs/libcurl/opts/CURLOPT_MAXFILESIZE_LARGE.3
-    curl/docs/libcurl/opts/CURLOPT_MAXREDIRS.3
-    curl/docs/libcurl/opts/CURLOPT_MAX_RECV_SPEED_LARGE.3
-    curl/docs/libcurl/opts/CURLOPT_MAX_SEND_SPEED_LARGE.3
-    curl/docs/libcurl/opts/CURLOPT_NETRC.3
-    curl/docs/libcurl/opts/CURLOPT_NETRC_FILE.3
-    curl/docs/libcurl/opts/CURLOPT_NEW_DIRECTORY_PERMS.3
-    curl/docs/libcurl/opts/CURLOPT_NEW_FILE_PERMS.3
-    curl/docs/libcurl/opts/CURLOPT_NOBODY.3
-    curl/docs/libcurl/opts/CURLOPT_NOPROGRESS.3
-    curl/docs/libcurl/opts/CURLOPT_NOPROXY.3
-    curl/docs/libcurl/opts/CURLOPT_NOSIGNAL.3
-    curl/docs/libcurl/opts/CURLOPT_OPENSOCKETDATA.3
-    curl/docs/libcurl/opts/CURLOPT_OPENSOCKETFUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_PASSWORD.3
-    curl/docs/libcurl/opts/CURLOPT_PATH_AS_IS.3
-    curl/docs/libcurl/opts/CURLOPT_PINNEDPUBLICKEY.3
-    curl/docs/libcurl/opts/CURLOPT_PIPEWAIT.3
-    curl/docs/libcurl/opts/CURLOPT_PORT.3
-    curl/docs/libcurl/opts/CURLOPT_POST.3
-    curl/docs/libcurl/opts/CURLOPT_POSTFIELDS.3
-    curl/docs/libcurl/opts/CURLOPT_POSTFIELDSIZE.3
-    curl/docs/libcurl/opts/CURLOPT_POSTFIELDSIZE_LARGE.3
-    curl/docs/libcurl/opts/CURLOPT_POSTQUOTE.3
-    curl/docs/libcurl/opts/CURLOPT_POSTREDIR.3
-    curl/docs/libcurl/opts/CURLOPT_PREQUOTE.3
-    curl/docs/libcurl/opts/CURLOPT_PRIVATE.3
-    curl/docs/libcurl/opts/CURLOPT_PROGRESSDATA.3
-    curl/docs/libcurl/opts/CURLOPT_PROGRESSFUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_PROTOCOLS.3
-    curl/docs/libcurl/opts/CURLOPT_PROXY.3
-    curl/docs/libcurl/opts/CURLOPT_PROXYAUTH.3
-    curl/docs/libcurl/opts/CURLOPT_PROXYHEADER.3
-    curl/docs/libcurl/opts/CURLOPT_PROXYPASSWORD.3
-    curl/docs/libcurl/opts/CURLOPT_PROXYPORT.3
-    curl/docs/libcurl/opts/CURLOPT_PROXYTYPE.3
-    curl/docs/libcurl/opts/CURLOPT_PROXYUSERNAME.3
-    curl/docs/libcurl/opts/CURLOPT_PROXYUSERPWD.3
-    curl/docs/libcurl/opts/CURLOPT_PROXY_SERVICE_NAME.3
-    curl/docs/libcurl/opts/CURLOPT_PROXY_TRANSFER_MODE.3
-    curl/docs/libcurl/opts/CURLOPT_PUT.3
-    curl/docs/libcurl/opts/CURLOPT_QUOTE.3
-    curl/docs/libcurl/opts/CURLOPT_RANDOM_FILE.3
-    curl/docs/libcurl/opts/CURLOPT_RANGE.3
-    curl/docs/libcurl/opts/CURLOPT_READDATA.3
-    curl/docs/libcurl/opts/CURLOPT_READFUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_REDIR_PROTOCOLS.3
-    curl/docs/libcurl/opts/CURLOPT_REFERER.3
-    curl/docs/libcurl/opts/CURLOPT_RESOLVE.3
-    curl/docs/libcurl/opts/CURLOPT_RESUME_FROM.3
-    curl/docs/libcurl/opts/CURLOPT_RESUME_FROM_LARGE.3
-    curl/docs/libcurl/opts/CURLOPT_RTSP_CLIENT_CSEQ.3
-    curl/docs/libcurl/opts/CURLOPT_RTSP_REQUEST.3
-    curl/docs/libcurl/opts/CURLOPT_RTSP_SERVER_CSEQ.3
-    curl/docs/libcurl/opts/CURLOPT_RTSP_SESSION_ID.3
-    curl/docs/libcurl/opts/CURLOPT_RTSP_STREAM_URI.3
-    curl/docs/libcurl/opts/CURLOPT_RTSP_TRANSPORT.3
-    curl/docs/libcurl/opts/CURLOPT_SASL_IR.3
-    curl/docs/libcurl/opts/CURLOPT_SEEKDATA.3
-    curl/docs/libcurl/opts/CURLOPT_SEEKFUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_SERVICE_NAME.3
-    curl/docs/libcurl/opts/CURLOPT_SHARE.3
-    curl/docs/libcurl/opts/CURLOPT_SOCKOPTDATA.3
-    curl/docs/libcurl/opts/CURLOPT_SOCKOPTFUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_SOCKS5_GSSAPI_NEC.3
-    curl/docs/libcurl/opts/CURLOPT_SOCKS5_GSSAPI_SERVICE.3
-    curl/docs/libcurl/opts/CURLOPT_SSH_AUTH_TYPES.3
-    curl/docs/libcurl/opts/CURLOPT_SSH_HOST_PUBLIC_KEY_MD5.3
-    curl/docs/libcurl/opts/CURLOPT_SSH_KEYDATA.3
-    curl/docs/libcurl/opts/CURLOPT_SSH_KEYFUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_SSH_KNOWNHOSTS.3
-    curl/docs/libcurl/opts/CURLOPT_SSH_PRIVATE_KEYFILE.3
-    curl/docs/libcurl/opts/CURLOPT_SSH_PUBLIC_KEYFILE.3
-    curl/docs/libcurl/opts/CURLOPT_SSLCERT.3
-    curl/docs/libcurl/opts/CURLOPT_SSLCERTTYPE.3
-    curl/docs/libcurl/opts/CURLOPT_SSLENGINE.3
-    curl/docs/libcurl/opts/CURLOPT_SSLENGINE_DEFAULT.3
-    curl/docs/libcurl/opts/CURLOPT_SSLKEY.3
-    curl/docs/libcurl/opts/CURLOPT_SSLKEYTYPE.3
-    curl/docs/libcurl/opts/CURLOPT_SSLVERSION.3
-    curl/docs/libcurl/opts/CURLOPT_SSL_CIPHER_LIST.3
-    curl/docs/libcurl/opts/CURLOPT_SSL_CTX_DATA.3
-    curl/docs/libcurl/opts/CURLOPT_SSL_CTX_FUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_SSL_ENABLE_ALPN.3
-    curl/docs/libcurl/opts/CURLOPT_SSL_ENABLE_NPN.3
-    curl/docs/libcurl/opts/CURLOPT_SSL_FALSESTART.3
-    curl/docs/libcurl/opts/CURLOPT_SSL_OPTIONS.3
-    curl/docs/libcurl/opts/CURLOPT_SSL_SESSIONID_CACHE.3
-    curl/docs/libcurl/opts/CURLOPT_SSL_VERIFYHOST.3
-    curl/docs/libcurl/opts/CURLOPT_SSL_VERIFYPEER.3
-    curl/docs/libcurl/opts/CURLOPT_SSL_VERIFYSTATUS.3
-    curl/docs/libcurl/opts/CURLOPT_STDERR.3
-    curl/docs/libcurl/opts/CURLOPT_TCP_KEEPALIVE.3
-    curl/docs/libcurl/opts/CURLOPT_TCP_KEEPIDLE.3
-    curl/docs/libcurl/opts/CURLOPT_TCP_KEEPINTVL.3
-    curl/docs/libcurl/opts/CURLOPT_TCP_NODELAY.3
-    curl/docs/libcurl/opts/CURLOPT_TELNETOPTIONS.3
-    curl/docs/libcurl/opts/CURLOPT_TFTP_BLKSIZE.3
-    curl/docs/libcurl/opts/CURLOPT_TIMECONDITION.3
-    curl/docs/libcurl/opts/CURLOPT_TIMEOUT.3
-    curl/docs/libcurl/opts/CURLOPT_TIMEOUT_MS.3
-    curl/docs/libcurl/opts/CURLOPT_TIMEVALUE.3
-    curl/docs/libcurl/opts/CURLOPT_TLSAUTH_PASSWORD.3
-    curl/docs/libcurl/opts/CURLOPT_TLSAUTH_TYPE.3
-    curl/docs/libcurl/opts/CURLOPT_TLSAUTH_USERNAME.3
-    curl/docs/libcurl/opts/CURLOPT_TRANSFERTEXT.3
-    curl/docs/libcurl/opts/CURLOPT_TRANSFER_ENCODING.3
-    curl/docs/libcurl/opts/CURLOPT_UNIX_SOCKET_PATH.3
-    curl/docs/libcurl/opts/CURLOPT_UNRESTRICTED_AUTH.3
-    curl/docs/libcurl/opts/CURLOPT_UPLOAD.3
-    curl/docs/libcurl/opts/CURLOPT_URL.3
-    curl/docs/libcurl/opts/CURLOPT_USERAGENT.3
-    curl/docs/libcurl/opts/CURLOPT_USERNAME.3
-    curl/docs/libcurl/opts/CURLOPT_USERPWD.3
-    curl/docs/libcurl/opts/CURLOPT_USE_SSL.3
-    curl/docs/libcurl/opts/CURLOPT_VERBOSE.3
-    curl/docs/libcurl/opts/CURLOPT_WILDCARDMATCH.3
-    curl/docs/libcurl/opts/CURLOPT_WRITEDATA.3
-    curl/docs/libcurl/opts/CURLOPT_WRITEFUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_XFERINFODATA.3
-    curl/docs/libcurl/opts/CURLOPT_XFERINFOFUNCTION.3
-    curl/docs/libcurl/opts/CURLOPT_XOAUTH2_BEARER.3
-)
-
+file(GLOB man3
+	${CMAKE_CURRENT_SOURCE_DIR}/curl/docs/libcurl/*.3
+	${CMAKE_CURRENT_SOURCE_DIR}/curl/docs/libcurl/opts/*.3)
 install(FILES ${man3} DESTINATION libexec/darling/usr/share/man/man3)

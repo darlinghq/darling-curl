@@ -14,12 +14,8 @@ none
 <features>
 unittest
 </features>
- <name>
+<name>
 Test WIN32/MSDOS filename sanitization
- </name>
-<tool>
-unit1604
-</tool>
+</name>
 </client>
-
 </testcase>

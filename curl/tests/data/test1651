@@ -15,12 +15,8 @@ none
 <features>
 unittest
 </features>
- <name>
+<name>
 x509 parsing
- </name>
-<tool>
-unit1651
-</tool>
+</name>
 </client>
-
 </testcase>

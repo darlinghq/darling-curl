@@ -1,19 +1,44 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#
+#  Project                     ___| | | |  _ \| |
+#                             / __| | | | |_) | |
+#                            | (__| |_| |  _ <| |___
+#                             \___|\___/|_| \_\_____|
+#
+# Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution. The terms
+# are also available at https://curl.se/docs/copyright.html.
+#
+# You may opt to use, copy, modify, merge, publish, distribute and/or sell
+# copies of the Software, and permit persons to whom the Software is
+# furnished to do so, under the terms of the COPYING file.
+#
+# This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
+# KIND, either express or implied.
+#
+# SPDX-License-Identifier: curl
 #
 """ A telnet server which negotiates"""
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-import argparse
-import os
-import sys
-import logging
-try:  # Python 2
-    import SocketServer as socketserver
-except ImportError:  # Python 3
-    import socketserver
 
+import argparse
+import logging
+import os
+import socket
+import sys
+import time
+
+from util import ClosingFileHandler
+
+if sys.version_info.major >= 3:
+    import socketserver
+else:
+    import SocketServer as socketserver
 
 log = logging.getLogger(__name__)
 HOST = "localhost"
@@ -32,6 +57,9 @@ def telnetserver(options):
     """
     if options.pidfile:
         pid = os.getpid()
+        # see tests/server/util.c function write_pidfile
+        if os.name == "nt":
+            pid += 65536
         with open(options.pidfile, "w") as f:
             f.write(str(pid))
 
@@ -40,9 +68,9 @@ def telnetserver(options):
 
     # Need to set the allow_reuse on the class, not on the instance.
     socketserver.TCPServer.allow_reuse_address = True
-    server = socketserver.TCPServer(local_bind, NegotiatingTelnetHandler)
-    server.serve_forever()
-
+    with socketserver.TCPServer(local_bind, NegotiatingTelnetHandler) as server:
+        server.serve_forever()
+    # leaving `with` calls server.close() automatically
     return ScriptRC.SUCCESS
 
 
@@ -64,20 +92,30 @@ class NegotiatingTelnetHandler(socketserver.BaseRequestHandler):
             neg.send_wont("NAWS")
 
             # Get the data passed through the negotiator
-            data = neg.recv(1024)
+            data = neg.recv(4*1024)
             log.debug("Incoming data: %r", data)
 
-            if VERIFIED_REQ.encode('ascii') in data:
+            if VERIFIED_REQ.encode('utf-8') in data:
                 log.debug("Received verification request from test framework")
-                response = VERIFIED_RSP.format(pid=os.getpid())
-                response_data = response.encode('ascii')
+                pid = os.getpid()
+                # see tests/server/util.c function write_pidfile
+                if os.name == "nt":
+                    pid += 65536
+                response = VERIFIED_RSP.format(pid=pid)
+                response_data = response.encode('utf-8')
             else:
                 log.debug("Received normal request - echoing back")
-                response_data = data.strip()
+                response_data = data.decode('utf-8').strip().encode('utf-8')
 
             if response_data:
                 log.debug("Sending %r", response_data)
                 self.request.sendall(response_data)
+
+            # put some effort into making a clean socket shutdown
+            # that does not give the client ECONNRESET
+            self.request.settimeout(0.1)
+            self.request.recv(4*1024)
+            self.request.shutdown(socket.SHUT_RDWR)
 
         except IOError:
             log.exception("IOError hit during request")
@@ -289,7 +327,7 @@ def setup_logging(options):
 
     # Write out to a logfile
     if options.logfile:
-        handler = logging.FileHandler(options.logfile, mode="w")
+        handler = ClosingFileHandler(options.logfile)
         handler.setFormatter(formatter)
         handler.setLevel(logging.DEBUG)
         root_logger.addHandler(handler)
@@ -335,6 +373,9 @@ if __name__ == '__main__':
     except Exception as e:
         log.exception(e)
         rc = ScriptRC.EXCEPTION
+
+    if options.pidfile and os.path.isfile(options.pidfile):
+        os.unlink(options.pidfile)
 
     log.info("Returning %d", rc)
     sys.exit(rc)

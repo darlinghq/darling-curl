@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2018, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 
@@ -46,7 +48,7 @@ typedef struct curl_context_s {
   curl_socket_t sockfd;
 } curl_context_t;
 
-static curl_context_t* create_curl_context(curl_socket_t sockfd)
+static curl_context_t *create_curl_context(curl_socket_t sockfd)
 {
   curl_context_t *context;
 
@@ -106,7 +108,7 @@ static void check_multi_info(void)
     case CURLMSG_DONE:
       /* Do not use message data after calling curl_multi_remove_handle() and
          curl_easy_cleanup(). As per curl_multi_info_read() docs:
-         "WARNING: The data the returned pointer points to will not survive
+         "WARNING: The data the returned pointer points to does not survive
          calling curl_multi_cleanup, curl_multi_remove_handle or
          curl_easy_cleanup." */
       easy_handle = message->easy_handle;
@@ -163,8 +165,7 @@ static int start_timeout(CURLM *multi, long timeout_ms, void *userp)
   }
   else {
     if(timeout_ms == 0)
-      timeout_ms = 1; /* 0 means directly call socket_action, but we'll do it
-                         in a bit */
+      timeout_ms = 1; /* 0 means call socket_action asap */
     uv_timer_start(&timeout, on_timeout, timeout_ms, 0);
   }
   return 0;

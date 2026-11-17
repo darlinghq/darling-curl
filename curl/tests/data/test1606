@@ -15,12 +15,8 @@ none
 <features>
 unittest
 </features>
- <name>
+<name>
 verify speedcheck
- </name>
-<tool>
-unit1606
-</tool>
+</name>
 </client>
-
 </testcase>

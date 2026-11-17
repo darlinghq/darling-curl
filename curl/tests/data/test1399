@@ -15,12 +15,8 @@ none
 <features>
 unittest
 </features>
- <name>
+<name>
 Curl_pgrsTime unit tests
- </name>
-<tool>
-unit1399
-</tool>
+</name>
 </client>
-
 </testcase>

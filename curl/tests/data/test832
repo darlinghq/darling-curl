@@ -31,11 +31,11 @@ imap
 debug
 crypto
 </features>
- <name>
+<name>
 IMAP DIGEST-MD5 graceful cancellation
- </name>
- <command>
-'imap://%HOSTIP:%IMAPPORT/832/;MAILINDEX=1' -u user:secret
+</name>
+<command>
+'imap://%HOSTIP:%IMAPPORT/%TESTNUMBER/;MAILINDEX=1' -u user:secret
 </command>
 </client>
 

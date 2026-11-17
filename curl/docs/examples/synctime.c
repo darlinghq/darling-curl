@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2018, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 /* <DESC>
@@ -39,7 +41,7 @@
  *
  * Synchronising your computer clock via Internet time server usually relies
  * on DAYTIME, TIME, or NTP protocols. These protocols provide good accurate
- * time synchronisation but it does not work very well through a
+ * time synchronization but it does not work well through a
  * firewall/proxy. Some adjustment has to be made to the firewall/proxy for
  * these protocols to work properly.
  *
@@ -48,16 +50,16 @@
  * using HTTP protocol which has no problem with firewall/proxy.
  *
  * For this software to work, you should take note of these items.
- * 1. Your firewall/proxy must allow your computer to surf internet.
+ * 1. Your firewall/proxy must allow your computer to surf Internet.
  * 2. Webserver system time must in sync with the NTP time server,
  *    or at least provide an accurate time keeping.
  * 3. Webserver HTTP header does not provide the milliseconds units,
- *    so there is no way to get very accurate time.
+ *    so there is no way to get an accurate time.
  * 4. This software could only provide an accuracy of +- a few seconds,
  *    as Round-Trip delay time is not taken into consideration.
  *    Compensation of network, firewall/proxy delay cannot be simply divide
  *    the Round-Trip delay time by half.
- * 5. Win32 SetSystemTime() API will set your computer clock according to
+ * 5. Win32 SetSystemTime() API sets your computer clock according to
  *    GMT/UTC time. Therefore your computer timezone must be properly set.
  * 6. Webserver data should not be cached by the proxy server. Some
  *    webserver provide Cache-Control to prevent caching.
@@ -69,7 +71,7 @@
  *    tf.nist.gov/timefreq/service/firewall.htm
  *
  * Usage:
- * This software will synchronise your computer clock only when you issue
+ * This software synchronises your computer clock only when you issue
  * it with --synctime. By default, it only display the webserver's clock.
  *
  * Written by: Frank (contributed to libcurl)
@@ -89,11 +91,11 @@
 
 #include <stdio.h>
 #include <time.h>
-#ifndef __CYGWIN__
-#include <winsock2.h>
+#include <curl/curl.h>
+
+#ifdef _WIN32
 #include <windows.h>
 #endif
-#include <curl/curl.h>
 
 
 #define MAX_STRING              256
@@ -137,7 +139,6 @@ size_t SyncTime_CURL_WriteOutput(void *ptr, size_t size, size_t nmemb,
 size_t SyncTime_CURL_WriteHeader(void *ptr, size_t size, size_t nmemb,
                                  void *stream)
 {
-  int   i, RetVal;
   char  TmpStr1[26], TmpStr2[26];
 
   (void)stream;
@@ -156,11 +157,13 @@ size_t SyncTime_CURL_WriteHeader(void *ptr, size_t size, size_t nmemb,
                                          TmpStr1 & 2? */
         AutoSyncTime = 0;
       else {
-        RetVal = sscanf((char *)(ptr), "Date: %s %hu %s %hu %hu:%hu:%hu",
-                        TmpStr1, &SYSTime.wDay, TmpStr2, &SYSTime.wYear,
-                        &SYSTime.wHour, &SYSTime.wMinute, &SYSTime.wSecond);
+        int RetVal = sscanf((char *)(ptr), "Date: %25s %hu %s %hu %hu:%hu:%hu",
+                            TmpStr1, &SYSTime.wDay, TmpStr2, &SYSTime.wYear,
+                            &SYSTime.wHour, &SYSTime.wMinute,
+                            &SYSTime.wSecond);
 
         if(RetVal == 7) {
+          int i;
           SYSTime.wMilliseconds = 500;    /* adjust to midpoint, 0.5 sec */
           for(i = 0; i<12; i++) {
             if(strcmp(MthStr[i], TmpStr2) == 0) {
@@ -168,7 +171,7 @@ size_t SyncTime_CURL_WriteHeader(void *ptr, size_t size, size_t nmemb,
               break;
             }
           }
-          AutoSyncTime = 3;       /* Computer clock will be adjusted */
+          AutoSyncTime = 3;       /* Computer clock is adjusted */
         }
         else {
           AutoSyncTime = 0;       /* Error in sscanf() fields conversion */
@@ -197,8 +200,8 @@ void SyncTime_CURL_Init(CURL *curl, char *proxy_port,
 #ifdef SYNCTIME_UA
   curl_easy_setopt(curl, CURLOPT_USERAGENT, SYNCTIME_UA);
 #endif
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, *SyncTime_CURL_WriteOutput);
-  curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, *SyncTime_CURL_WriteHeader);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, SyncTime_CURL_WriteOutput);
+  curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, SyncTime_CURL_WriteHeader);
 }
 
 int SyncTime_CURL_Fetch(CURL *curl, char *URL_Str, char *OutFileName,
@@ -217,7 +220,7 @@ int SyncTime_CURL_Fetch(CURL *curl, char *URL_Str, char *OutFileName,
 
   curl_easy_setopt(curl, CURLOPT_URL, URL_Str);
   res = curl_easy_perform(curl);
-  if(outfile != NULL)
+  if(outfile)
     fclose(outfile);
   return res;  /* (CURLE_OK) */
 }
@@ -257,25 +260,15 @@ int main(int argc, char *argv[])
 {
   CURL    *curl;
   conf_t  conf[1];
-  int     OptionIndex;
-  struct  tm *lt;
-  struct  tm *gmt;
-  time_t  tt;
-  time_t  tt_local;
-  time_t  tt_gmt;
-  double  tzonediffFloat;
-  int     tzonediffWord;
-  char    timeBuf[61];
-  char    tzoneBuf[16];
   int     RetValue;
 
-  OptionIndex     = 0;
   ShowAllHeader   = 0;    /* Do not show HTTP Header */
   AutoSyncTime    = 0;    /* Do not synchronise computer clock */
   RetValue        = 0;    /* Successful Exit */
   conf_init(conf);
 
   if(argc > 1) {
+    int OptionIndex = 0;
     while(OptionIndex < argc) {
       if(strncmp(argv[OptionIndex], "--server=", 9) == 0)
         snprintf(conf->timeserver, MAX_STRING, "%s", &argv[OptionIndex][9]);
@@ -308,6 +301,16 @@ int main(int argc, char *argv[])
   curl_global_init(CURL_GLOBAL_ALL);
   curl = curl_easy_init();
   if(curl) {
+    struct tm *lt;
+    struct tm *gmt;
+    time_t tt;
+    time_t tt_local;
+    time_t tt_gmt;
+    double tzonediffFloat;
+    int tzonediffWord;
+    char timeBuf[61];
+    char tzoneBuf[16];
+
     SyncTime_CURL_Init(curl, conf->http_proxy, conf->proxy_user);
 
     /* Calculating time diff between GMT and localtime */

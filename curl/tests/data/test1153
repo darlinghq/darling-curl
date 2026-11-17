@@ -36,11 +36,11 @@ dr-xr-xr-x   5 0        1            512 Oct  1  1997 usr
 <server>
 ftp
 </server>
- <name>
+<name>
 FTP with quoted double quotes
- </name>
- <command>
-ftp://%HOSTIP:%FTPPORT/test-1153/
+</name>
+<command>
+ftp://%HOSTIP:%FTPPORT/test-%TESTNUMBER/
 </command>
 </client>
 
@@ -51,7 +51,7 @@ ftp://%HOSTIP:%FTPPORT/test-1153/
 USER anonymous
 PASS ftp@example.com
 PWD
-CWD test-1153
+CWD test-%TESTNUMBER
 EPSV
 TYPE A
 LIST

@@ -2,7 +2,7 @@
 <info>
 <keywords>
 unittest
-URL API
+URLAPI
 </keywords>
 </info>
 
@@ -12,6 +12,9 @@ URL API
 <server>
 none
 </server>
+<setenv>
+LANG=en_US.UTF-8
+</setenv>
 <features>
 file
 https
@@ -23,12 +26,17 @@ ldap
 dict
 ftp
 </features>
- <name>
+<name>
 URL API
- </name>
+</name>
 <tool>
-lib1560
+lib%TESTNUMBER
 </tool>
 </client>
 
+<verify>
+<stdout>
+success
+</stdout>
+</verify>
 </testcase>

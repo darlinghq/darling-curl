@@ -12,11 +12,11 @@ CONNECT_ONLY
 ftp
 </server>
 <tool>
-lib597
+lib%TESTNUMBER
 </tool>
- <name>
+<name>
 FTP connect only option
- </name>
+</name>
 
 <command>
 ftp://%HOSTIP:%FTPPORT

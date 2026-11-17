@@ -14,13 +14,10 @@ none
 </server>
 <features>
 unittest
+shuffle-dns
 </features>
- <name>
+<name>
 verify DNS shuffling
- </name>
-<tool>
-unit1608
-</tool>
+</name>
 </client>
-
 </testcase>

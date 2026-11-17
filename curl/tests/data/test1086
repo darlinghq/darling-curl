@@ -6,7 +6,9 @@ EPSV
 RETR
 timeout
 FAILURE
+SLOWDOWN
 flaky
+timing-dependent
 </keywords>
 </info>
 
@@ -16,6 +18,7 @@ flaky
 # to avoid wasting time waiting for the data phase to start
 <servercmd>
 SLOWDOWN
+REPLY welcome 220 Hey
 REPLY USER 331 OK
 REPLY PASS 230 OK
 REPLY PWD 257 "/"
@@ -83,11 +86,11 @@ ftp
 <killserver>
 ftp
 </killserver>
- <name>
+<name>
 FTP download with strict timeout and slow data transfer
- </name>
- <command timeout="1">
-ftp://%HOSTIP:%FTPPORT/1086 -m 7
+</name>
+<command>
+ftp://%HOSTIP:%FTPPORT/%TESTNUMBER -m 7
 </command>
 </client>
 
@@ -103,8 +106,8 @@ PASS ftp@example.com
 PWD
 EPSV
 TYPE I
-SIZE 1086
-RETR 1086
+SIZE %TESTNUMBER
+RETR %TESTNUMBER
 </protocol>
 </verify>
 </testcase>

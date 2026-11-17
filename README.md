@@ -2,7 +2,7 @@
 
 ## Upstream URL
 
-https://github.com/apple-oss-distributions/curl/tree/curl-121.100.3
+https://github.com/apple-oss-distributions/curl/tree/curl-166.0.0.0.1
 
 ## Updating Source
 
