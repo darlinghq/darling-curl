@@ -18,20 +18,17 @@ none
 <features>
 http
 </features>
- <name>
+<name>
 HTTP, -O with no file name part in the URL
- </name>
+</name>
  <command option="no-output">
-http://%HOSTIP:%HTTPPORT/76/ -O
+http://%HOSTIP:%NOLISTENPORT/%TESTNUMBER/ -O
 </command>
 </client>
 
 #
 # Verify data after the test has been "shot"
 <verify>
-<strip>
-^User-Agent:.*
-</strip>
 <errorcode>
 23
 </errorcode>

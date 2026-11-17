@@ -22,11 +22,11 @@ REPLY EPSV 314 bluah you f00l!
 <server>
 ftp
 </server>
- <name>
+<name>
 FTP download, failed PWD
- </name>
- <command>
-ftp://%HOSTIP:%FTPPORT/124
+</name>
+<command>
+ftp://%HOSTIP:%FTPPORT/%TESTNUMBER
 </command>
 </client>
 
@@ -39,8 +39,8 @@ PWD
 EPSV
 PASV
 TYPE I
-SIZE 124
-RETR 124
+SIZE %TESTNUMBER
+RETR %TESTNUMBER
 QUIT
 </protocol>
 </verify>

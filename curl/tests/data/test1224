@@ -23,11 +23,11 @@ works
 <server>
 ftp
 </server>
- <name>
+<name>
 FTP fetch a file from the root directory
- </name>
- <command>
-ftp://%HOSTIP:%FTPPORT//1224
+</name>
+<command>
+ftp://%HOSTIP:%FTPPORT//%TESTNUMBER
 </command>
 
 </client>
@@ -41,8 +41,8 @@ PWD
 CWD /
 EPSV
 TYPE I
-SIZE 1224
-RETR 1224
+SIZE %TESTNUMBER
+RETR %TESTNUMBER
 QUIT
 </protocol>
 </verify>

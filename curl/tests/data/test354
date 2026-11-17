@@ -26,11 +26,11 @@ REPLY USER 200 fine, proceed without password
 <server>
 ftp
 </server>
- <name>
+<name>
 FTP without password
- </name>
- <command>
-ftp://%HOSTIP:%FTPPORT/354
+</name>
+<command>
+ftp://%HOSTIP:%FTPPORT/%TESTNUMBER
 </command>
 
 </client>
@@ -42,8 +42,8 @@ USER anonymous
 PWD
 EPSV
 TYPE I
-SIZE 354
-RETR 354
+SIZE %TESTNUMBER
+RETR %TESTNUMBER
 QUIT
 </protocol>
 </verify>

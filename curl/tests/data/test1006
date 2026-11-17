@@ -24,11 +24,11 @@ REPLY CWD 250-AAAAAAAAAAAAAAAAAAAAAAAAA\r\n250-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 <server>
 ftp
 </server>
- <name>
+<name>
 FTP with excessively large number of server command response lines (boundary condition)
- </name>
- <command>
-ftp://%HOSTIP:%FTPPORT/path/1006
+</name>
+<command>
+ftp://%HOSTIP:%FTPPORT/path/%TESTNUMBER
 </command>
 </client>
 
@@ -41,8 +41,8 @@ PWD
 CWD path
 EPSV
 TYPE I
-SIZE 1006
-RETR 1006
+SIZE %TESTNUMBER
+RETR %TESTNUMBER
 QUIT
 </protocol>
 </verify>

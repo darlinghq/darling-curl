@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2019, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -18,16 +18,19 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
+ * SPDX-License-Identifier: curl
+ *
  ***************************************************************************/
 #include "tool_setup.h"
 
-#if defined(MSDOS) || defined(WIN32)
+#if defined(_WIN32) || defined(MSDOS)
 
 #if defined(HAVE_LIBGEN_H) && defined(HAVE_BASENAME)
 #  include <libgen.h>
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
+#  include <stdlib.h>
 #  include <tlhelp32.h>
 #  include "tool_cfgable.h"
 #  include "tool_libinfo.h"
@@ -36,36 +39,10 @@
 #include "tool_bname.h"
 #include "tool_doswin.h"
 
+#include "curlx.h"
 #include "memdebug.h" /* keep this as LAST include */
 
-/*
- * Macros ALWAYS_TRUE and ALWAYS_FALSE are used to avoid compiler warnings.
- */
-
-#define ALWAYS_TRUE   (1)
-#define ALWAYS_FALSE  (0)
-
-#if defined(_MSC_VER) && !defined(__POCC__)
-#  undef ALWAYS_TRUE
-#  undef ALWAYS_FALSE
-#  if (_MSC_VER < 1500)
-#    define ALWAYS_TRUE   (0, 1)
-#    define ALWAYS_FALSE  (1, 0)
-#  else
-#    define ALWAYS_TRUE \
-__pragma(warning(push)) \
-__pragma(warning(disable:4127)) \
-(1) \
-__pragma(warning(pop))
-#    define ALWAYS_FALSE \
-__pragma(warning(push)) \
-__pragma(warning(disable:4127)) \
-(0) \
-__pragma(warning(pop))
-#  endif
-#endif
-
-#ifdef WIN32
+#ifdef _WIN32
 #  undef  PATH_MAX
 #  define PATH_MAX MAX_PATH
 #endif
@@ -78,10 +55,10 @@ __pragma(warning(pop))
 #  endif
 #endif
 
-#ifdef WIN32
-#  define _use_lfn(f) ALWAYS_TRUE   /* long file names always available */
+#ifdef _WIN32
+#  define _use_lfn(f) (1)   /* long file names always available */
 #elif !defined(__DJGPP__) || (__DJGPP__ < 2)  /* DJGPP 2.0 has _use_lfn() */
-#  define _use_lfn(f) ALWAYS_FALSE  /* long file names never available */
+#  define _use_lfn(f) (0)  /* long file names never available */
 #elif defined(__DJGPP__)
 #  include <fcntl.h>                /* _use_lfn(f) prototype */
 #endif
@@ -370,7 +347,7 @@ SANITIZEcode msdosify(char **const sanitized, const char *file_name,
   if(s[0] >= 'A' && s[0] <= 'z' && s[1] == ':') {
     *d++ = *s++;
     *d = ((flags & (SANITIZE_ALLOW_COLONS|SANITIZE_ALLOW_PATH))) ? ':' : '_';
-    ++d, ++s;
+    ++d; ++s;
   }
 
   for(idx = 0, dot_idx = -1; *s && d < dlimit; s++, d++) {
@@ -599,7 +576,6 @@ SANITIZEcode rename_if_reserved_dos_device_name(char **const sanitized,
       }
       memmove(base + 1, base, blen + 1);
       base[0] = '_';
-      ++blen;
     }
   }
 #endif
@@ -621,7 +597,7 @@ char **__crt0_glob_function(char *arg)
 
 #endif /* MSDOS && (__DJGPP__ || __GO32__) */
 
-#ifdef WIN32
+#ifdef _WIN32
 
 /*
  * Function to find CACert bundle on a Win32 platform using SearchPath.
@@ -640,7 +616,7 @@ char **__crt0_glob_function(char *arg)
 
 CURLcode FindWin32CACert(struct OperationConfig *config,
                          curl_sslbackend backend,
-                         const char *bundle_file)
+                         const TCHAR *bundle_file)
 {
   CURLcode result = CURLE_OK;
 
@@ -650,19 +626,21 @@ CURLcode FindWin32CACert(struct OperationConfig *config,
    * ignored. We allow setting CA location for schannel only when explicitly
    * specified by the user via CURLOPT_CAINFO / --cacert.
    */
-  if((curlinfo->features & CURL_VERSION_SSL) &&
-     backend != CURLSSLBACKEND_SCHANNEL) {
+  if(feature_ssl && backend != CURLSSLBACKEND_SCHANNEL) {
 
     DWORD res_len;
-    char buf[PATH_MAX];
-    char *ptr = NULL;
+    TCHAR buf[PATH_MAX];
+    TCHAR *ptr = NULL;
 
-    buf[0] = '\0';
+    buf[0] = TEXT('\0');
 
-    res_len = SearchPathA(NULL, bundle_file, NULL, PATH_MAX, buf, &ptr);
+    res_len = SearchPath(NULL, bundle_file, NULL, PATH_MAX, buf, &ptr);
     if(res_len > 0) {
+      char *mstr = curlx_convert_tchar_to_UTF8(buf);
       Curl_safefree(config->cacert);
-      config->cacert = strdup(buf);
+      if(mstr)
+        config->cacert = strdup(mstr);
+      curlx_unicodefree(mstr);
       if(!config->cacert)
         result = CURLE_OUT_OF_MEMORY;
     }
@@ -725,6 +703,94 @@ cleanup:
   return slist;
 }
 
-#endif /* WIN32 */
+/* The terminal settings to restore on exit */
+static struct TerminalSettings {
+  HANDLE hStdOut;
+  DWORD dwOutputMode;
+  LONG valid;
+} TerminalSettings;
 
-#endif /* MSDOS || WIN32 */
+#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+#endif
+
+bool tool_term_has_bold;
+
+static void restore_terminal(void)
+{
+  if(InterlockedExchange(&TerminalSettings.valid, (LONG)FALSE))
+    SetConsoleMode(TerminalSettings.hStdOut, TerminalSettings.dwOutputMode);
+}
+
+/* This is the console signal handler.
+ * The system calls it in a separate thread.
+ */
+static BOOL WINAPI signal_handler(DWORD type)
+{
+  if(type == CTRL_C_EVENT || type == CTRL_BREAK_EVENT)
+    restore_terminal();
+  return FALSE;
+}
+
+static void init_terminal(void)
+{
+  TerminalSettings.hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+  /*
+   * Enable VT (Virtual Terminal) output.
+   * Note: VT mode flag can be set on any version of Windows, but VT
+   * processing only performed on Win10 >= version 1709 (OS build 16299)
+   * Creator's Update. Also, ANSI bold on/off supported since then.
+   */
+  if(TerminalSettings.hStdOut == INVALID_HANDLE_VALUE ||
+     !GetConsoleMode(TerminalSettings.hStdOut,
+                     &TerminalSettings.dwOutputMode) ||
+     !curlx_verify_windows_version(10, 0, 16299, PLATFORM_WINNT,
+                                   VERSION_GREATER_THAN_EQUAL))
+    return;
+
+  if((TerminalSettings.dwOutputMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+    tool_term_has_bold = true;
+  else {
+    /* The signal handler is set before attempting to change the console mode
+       because otherwise a signal would not be caught after the change but
+       before the handler was installed. */
+    (void)InterlockedExchange(&TerminalSettings.valid, (LONG)TRUE);
+    if(SetConsoleCtrlHandler(signal_handler, TRUE)) {
+      if(SetConsoleMode(TerminalSettings.hStdOut,
+                        (TerminalSettings.dwOutputMode |
+                         ENABLE_VIRTUAL_TERMINAL_PROCESSING))) {
+        tool_term_has_bold = true;
+        atexit(restore_terminal);
+      }
+      else {
+        SetConsoleCtrlHandler(signal_handler, FALSE);
+        (void)InterlockedExchange(&TerminalSettings.valid, (LONG)FALSE);
+      }
+    }
+  }
+}
+
+LARGE_INTEGER tool_freq;
+bool tool_isVistaOrGreater;
+
+CURLcode win32_init(void)
+{
+  /* curlx_verify_windows_version must be called during init at least once
+     because it has its own initialization routine. */
+  if(curlx_verify_windows_version(6, 0, 0, PLATFORM_WINNT,
+                                  VERSION_GREATER_THAN_EQUAL))
+    tool_isVistaOrGreater = true;
+  else
+    tool_isVistaOrGreater = false;
+
+  QueryPerformanceFrequency(&tool_freq);
+
+  init_terminal();
+
+  return CURLE_OK;
+}
+
+#endif /* _WIN32 */
+
+#endif /* _WIN32 || MSDOS */

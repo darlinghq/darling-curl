@@ -5,11 +5,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -17,6 +17,8 @@
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
+ *
+ * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
 #include "test.h"
@@ -39,10 +41,9 @@ int test(char *URL)
   char *rtsp_session_id;
   int request = 1;
   int i;
-  FILE *idfile = NULL;
 
-  idfile = fopen(libtest_arg2, "wb");
-  if(idfile == NULL) {
+  FILE *idfile = fopen(libtest_arg2, "wb");
+  if(!idfile) {
     fprintf(stderr, "couldn't open the Session ID File\n");
     return TEST_ERR_MAJOR_BAD;
   }
@@ -84,7 +85,7 @@ int test(char *URL)
       goto test_cleanup;
     }
     test_setopt(curl, CURLOPT_RTSP_STREAM_URI, stream_uri);
-    free(stream_uri);
+    curl_free(stream_uri);
     stream_uri = NULL;
 
     test_setopt(curl, CURLOPT_RTSP_REQUEST, CURL_RTSPREQ_SETUP);
@@ -104,7 +105,7 @@ int test(char *URL)
       goto test_cleanup;
     }
     test_setopt(curl, CURLOPT_RTSP_STREAM_URI, stream_uri);
-    free(stream_uri);
+    curl_free(stream_uri);
     stream_uri = NULL;
 
     test_setopt(curl, CURLOPT_RTSP_REQUEST, CURL_RTSPREQ_TEARDOWN);
@@ -119,7 +120,7 @@ test_cleanup:
   if(idfile)
     fclose(idfile);
 
-  free(stream_uri);
+  curl_free(stream_uri);
   curl_easy_cleanup(curl);
   curl_global_cleanup();
 

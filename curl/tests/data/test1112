@@ -1,4 +1,5 @@
 <testcase>
+# This is the ftps equivalent of test1086
 <info>
 <keywords>
 FTPS
@@ -6,6 +7,8 @@ EPSV
 RETR
 timeout
 FAILURE
+SLOWDOWN
+timing-dependent
 </keywords>
 </info>
 
@@ -15,6 +18,7 @@ FAILURE
 # to avoid wasting time waiting for the data phase to start
 <servercmd>
 SLOWDOWN
+REPLY welcome 220 Hey
 REPLY USER 331 OK
 REPLY PASS 230 OK
 REPLY PWD 257 "/"
@@ -85,11 +89,11 @@ ftps
 <killserver>
 ftps
 </killserver>
- <name>
+<name>
 FTPS download with strict timeout and slow data transfer
- </name>
- <command timeout="1">
--k --ftp-ssl-control ftps://%HOSTIP:%FTPSPORT/1112 -m 16
+</name>
+<command>
+-k --ftp-ssl-control ftps://%HOSTIP:%FTPSPORT/%TESTNUMBER -m 16
 </command>
 </client>
 
@@ -107,8 +111,8 @@ PROT C
 PWD
 EPSV
 TYPE I
-SIZE 1112
-RETR 1112
+SIZE %TESTNUMBER
+RETR %TESTNUMBER
 </protocol>
 </verify>
 </testcase>

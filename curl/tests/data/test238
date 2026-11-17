@@ -17,11 +17,11 @@ REPLY EPSV 229 Entering Passiv Mode (|||1000000|)
 <server>
 ftp
 </server>
- <name>
+<name>
 FTP getting bad port in response to EPSV
- </name>
- <command>
-ftp://%HOSTIP:%FTPPORT/238
+</name>
+<command>
+ftp://%HOSTIP:%FTPPORT/%TESTNUMBER
 </command>
 </client>
 
