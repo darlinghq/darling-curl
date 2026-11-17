@@ -228,7 +228,7 @@ set(DYLIB_CURRENT_VERSION "9.0.0")
 
 add_darling_library(curl SHARED ${curl_SRCS})
 make_fat(curl)
-target_link_libraries(curl PRIVATE system crypto46 ssl48 z nghttp2 CoreFoundation Security LDAP Kerberos)
+target_link_libraries(curl PRIVATE system crypto46 ssl48 z nghttp2 CoreFoundation SystemConfiguration Security LDAP Kerberos)
 set_target_properties(curl PROPERTIES OUTPUT_NAME "curl.4")
 
 target_compile_definitions(curl PRIVATE
