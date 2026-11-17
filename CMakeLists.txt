@@ -239,6 +239,9 @@ target_compile_definitions(curl PRIVATE
 	LIBRESSL_HAS_TLS1_3
 )
 
+# Only the functions marked CURL_EXTERN are exported, as in Apple's build.
+target_compile_options(curl PRIVATE -fvisibility=hidden)
+
 if (NOT DARLING_NO_EXECUTABLES)
     add_darling_executable(curlexe ${curlexe_SRCS})
     target_link_libraries(curlexe system curl z)
